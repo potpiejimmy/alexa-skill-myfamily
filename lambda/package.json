@@ -1,0 +1,26 @@
+{
+  "name": "alexa-skill-myfamily",
+  "version": "1.0.0",
+  "description": "Manage your family",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/potpiejimmy/alexa-skill-myfamily.git"
+  },
+  "keywords": [
+    "family",
+    "alexa"
+  ],
+  "author": "Thorsten Liese",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/potpiejimmy/alexa-skill-myfamily/issues"
+  },
+  "homepage": "https://github.com/potpiejimmy/alexa-skill-myfamily#readme",
+  "dependencies": {
+    "node-fetch": "^1.6.3"
+  }
+}

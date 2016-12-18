@@ -1,10 +1,8 @@
 {
   "intents": [
-    {
-      "intent": "HelloWorldIntent"
-    },
-    {
-      "intent": "AMAZON.HelpIntent"
-    }
+    {"intent": "HelloWorldIntent"},
+    {"intent": "GreetEnyaIntent"},
+    {"intent": "FetchDataIntent"},
+    {"intent": "AMAZON.HelpIntent"}
   ]
 }

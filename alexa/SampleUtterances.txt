@@ -1,3 +1,5 @@
 HelloWorldIntent sag hallo
 HelloWorldIntent hallo
 HelloWorldIntent wie geht's
+GreetEnyaIntent begrüße enya
+FetchDataIntent lade weltraum

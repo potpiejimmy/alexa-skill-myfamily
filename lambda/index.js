@@ -7,6 +7,7 @@ var APP_ID = 'amzn1.ask.skill.a011a313-560a-42fc-a514-9fcdc5ce5ef8';
  * The AlexaSkill prototype and helper functions
  */
 var AlexaSkill = require('./skill');
+var nodeFetch = require('node-fetch');
 
 /**
  * HelloWorld is a child of AlexaSkill.
@@ -45,6 +46,20 @@ HelloWorld.prototype.intentHandlers = {
     // register custom intent handlers
     "HelloWorldIntent": function (intent, session, response) {
         response.tellWithCard("Hallo Enya, hallo Julian, hallo Mama und Papa.", "Hallo Familie Liese", "Hallo Familie Liese");
+    },
+    "GreetEnyaIntent": function (intent, session, response) {
+        response.tellWithCard("Hallo Enya Sophia, wie geht es dir?", "Hallo Enya", "Hallo Enya, wie geht es dir?");
+    },
+    "FetchDataIntent": function (intent, session, response) {
+        nodeFetch('http://doogetha.com/buildtool/res/jobs/w7-deffm0368')
+            .then(function(res) {
+                return res.json();
+            }).then(function(body) {
+                var jobName = body[0].name;
+                response.tellWithCard(jobName, "Weltraum", jobName);
+            }).catch(function(err) {
+                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+            });
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
         response.ask("Sag hallo.", "Sag hallo.");
