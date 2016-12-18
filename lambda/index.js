@@ -1,7 +1,7 @@
 /**
  * App ID for the skill
  */
-var APP_ID = undefined; //replace with "amzn1.echo-sdk-ams.app.[your-unique-value-here]";
+var APP_ID = 'amzn1.ask.skill.a011a313-560a-42fc-a514-9fcdc5ce5ef8';
 
 /**
  * The AlexaSkill prototype and helper functions
@@ -30,8 +30,8 @@ HelloWorld.prototype.eventHandlers.onSessionStarted = function (sessionStartedRe
 
 HelloWorld.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
     console.log("HelloWorld onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
-    var speechOutput = "Welcome to the Alexa Skills Kit, you can say hello";
-    var repromptText = "You can say hello";
+    var speechOutput = "Willkommen bei deiner Familie. Sag hallo.";
+    var repromptText = "Sag hallo.";
     response.ask(speechOutput, repromptText);
 };
 
@@ -44,10 +44,10 @@ HelloWorld.prototype.eventHandlers.onSessionEnded = function (sessionEndedReques
 HelloWorld.prototype.intentHandlers = {
     // register custom intent handlers
     "HelloWorldIntent": function (intent, session, response) {
-        response.tellWithCard("Hello World!", "Hello World", "Hello World!");
+        response.tellWithCard("Hallo Enya, hallo Julian, hallo Mama und Papa.", "Hallo Familie Liese", "Hallo Familie Liese");
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
-        response.ask("You can say hello to me!", "You can say hello to me!");
+        response.ask("Sag hallo.", "Sag hallo.");
     }
 };
 
