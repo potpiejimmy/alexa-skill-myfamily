@@ -1,5 +1,5 @@
-HelloWorldIntent sag hallo
-HelloWorldIntent hallo
-HelloWorldIntent wie geht's
-GreetEnyaIntent begrüße enya
-FetchDataIntent lade weltraum
+SayHelloIntent hallo
+ListMembersIntent wer ist meine familie
+ListMembersIntent wer gehört zu meiner familie
+AddMemberIntent füge {name} hinzu
+DeleteMembersIntent lösche alle

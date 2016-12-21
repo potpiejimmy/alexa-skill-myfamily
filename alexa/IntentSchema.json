@@ -1,8 +1,9 @@
 {
   "intents": [
-    {"intent": "HelloWorldIntent"},
-    {"intent": "GreetEnyaIntent"},
-    {"intent": "FetchDataIntent"},
+    {"intent": "SayHelloIntent"},
+    {"intent": "ListMembersIntent"},
+    {"intent": "AddMemberIntent", "slots": [{"name": "name", "type": "CUSTOM_FAMILYMEMBER", "value": "Martin"}]},
+    {"intent": "DeleteMembersIntent"},
     {"intent": "AMAZON.HelpIntent"}
   ]
 }
