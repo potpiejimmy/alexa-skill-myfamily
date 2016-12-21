@@ -6,7 +6,8 @@ function getPool() {
     if (!pool) {
         pool = mysql.createPool({
             connectionLimit : 10,
-            host            : 'localhost',
+//            host            : 'localhost',
+            host            : 'aa15gl8c6cayopo.csfhqavngse0.eu-west-1.rds.amazonaws.com',
             user            : 'myfamily',
             password        : 'myfamily',
             database        : 'myfamily'

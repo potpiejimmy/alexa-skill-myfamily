@@ -10,6 +10,6 @@ app.get('/db', function (req, res) {
   db.querySingle(req.query.stmt).then(data => res.send(JSON.stringify(data))).catch(err => res.send(error));
 })
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!')
+app.listen(process.env.PORT, function () {
+  console.log('Example app listening on port ' + process.env.PORT);
 })
