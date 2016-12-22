@@ -25,7 +25,7 @@ MyFamily.prototype.constructor = MyFamily;
 
 MyFamily.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
     console.log("MyFamily onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
-    var speechOutput = "Willkommen bei deiner Familie. Sag hallo.";
+    var speechOutput = "Willkommen bei deiner Familie.";
     var repromptText = "Sag hallo.";
     response.ask(speechOutput, repromptText);
 };
@@ -86,7 +86,7 @@ MyFamily.prototype.intentHandlers = {
                 response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
-    "SetBirthdayIntent": function (intent, session, response) {
+    "SetDateOfBirthIntent": function (intent, session, response) {
         nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
             .then(function(res) {
                 return res.json();
@@ -96,12 +96,32 @@ MyFamily.prototype.intentHandlers = {
                 response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
+    "QueryDateOfBirthIntent": function (intent, session, response) {
+        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
+            .then(function(res) {
+                return res.json();
+            }).then(function(body) {
+                response.askWithCard(body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
+            }).catch(function(err) {
+                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+            });
+    },
+    "QueryAgeIntent": function (intent, session, response) {
+        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
+            .then(function(res) {
+                return res.json();
+            }).then(function(body) {
+                response.askWithCard(body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
+            }).catch(function(err) {
+                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+            });
+    },
     "QueryBirthdayIntent": function (intent, session, response) {
         nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
             .then(function(res) {
                 return res.json();
             }).then(function(body) {
-                response.askWithCard(body.name + " hat am " + body.birthday + " geburtstag", "Was nun?", "Geburtstagsanfrage", body.birthday);
+                response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
             }).catch(function(err) {
                 response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });

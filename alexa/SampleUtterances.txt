@@ -3,7 +3,11 @@ ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 AddMemberIntent füge {name} hinzu
 DeleteMembersIntent lösche alle
-SetBirthdayIntent {name} hat am {birthday} geburtstag
+SetDateOfBirthIntent {name} wurde am {birthday} geboren
+SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday}
+QueryDateOfBirthIntent wann wurde {name} geboren
+QueryDateOfBirthIntent was ist das geburtsdatum von {name}
+QueryAgeIntent wie alt ist {name}
 QueryBirthdayIntent wann hat {name} geburtstag
 QuitIntent ende
 QuitIntent auf wiedersehen
