@@ -25,6 +25,13 @@ app.delete('/member', function (req, res) {
   db.querySingle("delete from member").then(data => res.send(data)).catch(err => res.send(err));
 });
 
+app.get('/member/:name', function (req, res) {
+  if (req.query.set) {
+    db.querySingle("update member set " + req.query.set + "=? where name=?", [req.query.value, req.params.name]).catch(err => console.log(err));
+  }
+  db.querySingle("select * from member where name=?", [req.params.name]).then(data => res.send(data[0])).catch(err => res.send(err));
+});
+
 app.listen(process.env.PORT, function () {
   console.log('Example app listening on port ' + process.env.PORT);
 })

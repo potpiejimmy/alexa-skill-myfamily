@@ -2,8 +2,11 @@
   "intents": [
     {"intent": "SayHelloIntent"},
     {"intent": "ListMembersIntent"},
-    {"intent": "AddMemberIntent", "slots": [{"name": "name", "type": "CUSTOM_FAMILYMEMBER", "value": "Martin"}]},
+    {"intent": "AddMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "DeleteMembersIntent"},
+    {"intent": "SetBirthdayIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "birthday", "type": "AMAZON.DATE"}]},
+    {"intent": "QueryBirthdayIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
+    {"intent": "QuitIntent"},
     {"intent": "AMAZON.HelpIntent"}
   ]
 }

@@ -3,3 +3,8 @@ ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 AddMemberIntent füge {name} hinzu
 DeleteMembersIntent lösche alle
+SetBirthdayIntent {name} hat am {birthday} geburtstag
+QueryBirthdayIntent wann hat {name} geburtstag
+QuitIntent ende
+QuitIntent auf wiedersehen
+QuitIntent tschüs

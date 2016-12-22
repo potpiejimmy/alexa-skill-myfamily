@@ -45,29 +45,29 @@ MyFamily.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest,
 MyFamily.prototype.intentHandlers = {
     // register custom intent handlers
     "SayHelloIntent": function (intent, session, response) {
-        response.askWithCard("Hallo Enya, hallo Julian, hallo Mama und Papa.", "Was nun?", "Hallo Familie Liese", "Hallo Familie Liese");
+        response.askWithCard("Hallo Familie Liese.", "Was nun?", "Hallo Familie Liese", "Hallo Familie Liese");
     },
     "ListMembersIntent": function (intent, session, response) {
         nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member')
             .then(function(res) {
                 return res.json();
             }).then(function(body) {
-                if (body.length == 0)
-                    response.ask("Keine Familienmitglieder vorhanden", "Was nun?");
+                if (body.length === 0)
+                    response.ask("Es sind keine Familienmitglieder vorhanden", "Was nun?");
                 else {
                     var members = "";
                     body.forEach(m => {
                         if (members.length > 0) members += ", ";
                         members += m.name;
                     })
-                    response.askWithCard("Deine Familienmitglieder sind: " + members, "Weltraum", members);
+                    response.askWithCard("Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
                 }
             }).catch(function(err) {
                 response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "AddMemberIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member', {method: 'POST', body: {name: intent.slots.name.value}})
+        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
             .then(function(res) {
                 return res.json();
             }).then(function(body) {
@@ -85,6 +85,29 @@ MyFamily.prototype.intentHandlers = {
             }).catch(function(err) {
                 response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
+    },
+    "SetBirthdayIntent": function (intent, session, response) {
+        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
+            .then(function(res) {
+                return res.json();
+            }).then(function(body) {
+                response.ask("Okay", "Was nun?");
+            }).catch(function(err) {
+                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+            });
+    },
+    "QueryBirthdayIntent": function (intent, session, response) {
+        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
+            .then(function(res) {
+                return res.json();
+            }).then(function(body) {
+                response.askWithCard(body.name + " hat am " + body.birthday + " geburtstag", "Was nun?", "Geburtstagsanfrage", body.birthday);
+            }).catch(function(err) {
+                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+            });
+    },
+    "QuitIntent": function (intent, session, response) {
+        response.tell("Auf Wiedersehen");
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
         response.ask("Sag hallo.", "Sag hallo.");
