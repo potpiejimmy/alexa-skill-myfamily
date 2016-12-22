@@ -18,7 +18,10 @@ app.get('/member', function (req, res) {
 });
 
 app.post('/member', function (req, res) {
-  db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data)).catch(err => res.send(err));
+  findMember(req.body.name).then(member => {
+    if (member) res.send(member);
+    else db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
+  }).catch(err => res.send(err));
 });
 
 app.delete('/member', function (req, res) {
@@ -26,11 +29,27 @@ app.delete('/member', function (req, res) {
 });
 
 app.get('/member/:name', function (req, res) {
-  if (req.query.set) {
-    db.querySingle("update member set " + req.query.set + "=? where name=?", [req.query.value, req.params.name]).catch(err => console.log(err));
-  }
-  db.querySingle("select * from member where name=?", [req.params.name]).then(data => res.send(calcMemberBirthday(data[0]))).catch(err => res.send(err));
+  findMember(req.params.name).then(member => {
+    if (member) {
+      if (req.query.set) {
+        return db.querySingle("update member set " + req.query.set + "=? where name=?", [req.query.value, member.name])
+               .then(data => findMember(member.name))
+               .then(updatedMember => res.send(updatedMember));
+      } else {
+        res.send(member);
+      }
+    } else {
+      res.send("Not found");
+    }
+  }).catch(err => res.send(err));
 });
+
+function findMember(name) {
+  return db.querySingle("select * from member where name sounds like ?", [name]).then(data => {
+    if (data.length === 0) return null;
+    return calcMemberBirthday(data[0]);
+  });
+}
 
 function ageForBirthday(birthday) {
   return new Date((Date.now() - new Date(birthday).getTime())).getUTCFullYear() - 1970;
@@ -45,6 +64,7 @@ function nextBirthday(birthday) {
 }
 
 function calcMemberBirthday(member) {
+  if (!member.birthday || member.birthday.length === 0) return member;
   member.birthday_age = ageForBirthday(member.birthday);
   member.birthday_next = nextBirthday(member.birthday);
   return member;

@@ -2,6 +2,7 @@
  * App ID for the skill
  */
 var APP_ID = 'amzn1.ask.skill.a011a313-560a-42fc-a514-9fcdc5ce5ef8';
+var BACKEND_URL = 'http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com';
 
 /**
  * The AlexaSkill prototype and helper functions
@@ -48,10 +49,8 @@ MyFamily.prototype.intentHandlers = {
         response.askWithCard("Hallo Familie Liese.", "Was nun?", "Hallo Familie Liese", "Hallo Familie Liese");
     },
     "ListMembersIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member')
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member')
+            .then(function(body) {
                 if (body.length === 0)
                     response.ask("Es sind keine Familienmitglieder vorhanden", "Was nun?");
                 else {
@@ -62,68 +61,42 @@ MyFamily.prototype.intentHandlers = {
                     })
                     response.askWithCard("Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
                 }
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "AddMemberIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
+            .then(function(body) {
                 response.ask("Okay", "Was nun?");
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "DeleteMembersIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member', {method: 'DELETE'})
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member', {method: 'DELETE'})
+            .then(function(body) {
                 response.ask("Okay", "Was nun?");
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "SetDateOfBirthIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
-                response.ask("Okay", "Was nun?");
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
+            .then(function(body) {
+                response.askWithCard("Okay", "Was nun?", "Setze Geburtsdatum", intent.slots.name.value + " = " + intent.slots.birthday.value);
             });
     },
     "QueryDateOfBirthIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
+            .then(function(body) {
                 response.askWithCard(body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "QueryAgeIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
+            .then(function(body) {
                 response.askWithCard(body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "QueryBirthdayIntent": function (intent, session, response) {
-        nodeFetch('http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com/member/' + intent.slots.name.value)
-            .then(function(res) {
-                return res.json();
-            }).then(function(body) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
+            .then(function(body) {
                 response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
-            }).catch(function(err) {
-                response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
             });
     },
     "QuitIntent": function (intent, session, response) {
@@ -133,6 +106,15 @@ MyFamily.prototype.intentHandlers = {
         response.ask("Sag hallo.", "Sag hallo.");
     }
 };
+
+function invokeBackend(url, options) {
+    return nodeFetch(url, options)
+        .then(function(res) {
+            return res.json();
+        }).catch(function(err) {
+            response.tellWithCard("Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
+        });
+}
 
 // Create the handler that responds to the Alexa Request.
 exports.handler = function (event, context) {
