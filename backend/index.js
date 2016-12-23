@@ -48,9 +48,9 @@ app.get('/member/:name', function (req, res) {
 });
 
 function localizePhonetics_DE(name) {
-  if (name.startsWith("chr")) return "kr"+name.substr(3,name.length-3);
-  if (name.startsWith("cr")) return "kr"+name.substr(2,name.length-2);
-  if (name.endsWith("er")) return name.substr(0,name.length-2) + "a";
+  if (name.startsWith("chr")) name = "kr"+name.substr(3,name.length-3);
+  if (name.startsWith("cr")) name = "kr"+name.substr(2,name.length-2);
+  if (name.endsWith("er")) name = name.substr(0,name.length-2) + "a";
   return name;
 }
 
