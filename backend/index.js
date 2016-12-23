@@ -20,7 +20,10 @@ app.get('/member', function (req, res) {
 app.post('/member', function (req, res) {
   findMember(req.body.name).then(member => {
     if (member) res.send(member);
-    else db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
+    else {
+      req.body.name = localizePhonetics_DE(req.body.name);
+      db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
+    }
   }).catch(err => res.send(err));
 });
 
@@ -44,8 +47,16 @@ app.get('/member/:name', function (req, res) {
   }).catch(err => res.send(err));
 });
 
+function localizePhonetics_DE(name) {
+  if (name.startsWith("chr")) return "kr"+name.substr(3,name.length-3);
+  if (name.startsWith("cr")) return "kr"+name.substr(2,name.length-2);
+  if (name.endsWith("er")) return name.substr(0,name.length-2) + "a";
+  return name;
+}
+
 function findMember(name) {
-  return db.querySingle("select * from member where name sounds like ?", [name]).then(data => {
+  var phoneticName = localizePhonetics_DE(name);
+  return db.querySingle("select * from member where name sounds like ?", [phoneticName]).then(data => {
     if (data.length === 0) return null;
     return calcMemberBirthday(data[0]);
   });
