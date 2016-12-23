@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `member` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(45) NOT NULL,
   `birthday` VARCHAR(45) NULL,
+  `gender` CHAR(1) NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
@@ -34,6 +35,17 @@ CREATE TABLE IF NOT EXISTS `member_rel` (
     REFERENCES `member` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `member_rel_dict_de`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `member_rel_dict_de` (
+  `relname` VARCHAR(45) NOT NULL,
+  `relation` VARCHAR(45) NOT NULL,
+  `gender` CHAR(1) NULL,
+  PRIMARY KEY (`relname`))
 ENGINE = InnoDB;
 
 
