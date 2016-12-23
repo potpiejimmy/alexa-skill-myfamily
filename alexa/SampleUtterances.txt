@@ -9,6 +9,16 @@ QueryDateOfBirthIntent wann wurde {name} geboren
 QueryDateOfBirthIntent was ist das geburtsdatum von {name}
 QueryAgeIntent wie alt ist {name}
 QueryBirthdayIntent wann hat {name} geburtstag
+SetRelationIntent {name_a} ist {name_b} {relation}
+SetRelationIntent {name_a} ist der {relation} von {name_b}
+SetRelationIntent {name_a} ist die {relation} von {name_b}
+SetRelationIntent {name_a} ist das {relation} von {name_b}
+QueryRelationIntent wer ist {name} {relation}
+QueryRelationIntent wer sind {name} {relation}
+QueryRelationIntent wer ist der {relation} von {name}
+QueryRelationIntent wer ist die {relation} von {name}
+QueryRelationIntent wer ist das {relation} von {name}
+QueryRelationIntent wer sind die {relation} von {name}
 QuitIntent ende
 QuitIntent auf wiedersehen
 QuitIntent tschüs

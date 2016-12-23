@@ -99,6 +99,27 @@ MyFamily.prototype.intentHandlers = {
                 response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
             });
     },
+    "SetRelationIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
+            .then(function(body) {
+                response.askWithCard("Okay", "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
+            });
+    },
+    "QueryRelationIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + "/rel?reverse=true&find=" + intent.slots.relation.value)
+            .then(function(body) {
+                var answer = "";
+                if (!body.length) answer = "Ich habe " + intent.slots.relation.value + " von " + intent.slots.name.value + " nicht gefunden.";
+                for (i = 0; i < body.length; i++) {
+                    if (answer.length) {
+                        if (i === body.length - 1) answer += " und ";
+                        else answer += ", ";
+                    }
+                    answer += body[i].name;
+                }
+                response.askWithCard(answer, "Was nun?", "Frage Beziehung", intent.slots.relation.value + " von " + intent.slots.name.value + " = " + answer);
+            });
+    },
     "QuitIntent": function (intent, session, response) {
         response.tell("Auf Wiedersehen");
     },
