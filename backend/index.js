@@ -34,7 +34,7 @@ app.delete('/member', function (req, res) {
 
 app.get('/member/:name', function (req, res) {
   findMember(req.params.name).then(member => {
-    if (!member) {res.send("Not found"); return;}
+    if (!member) {res.send({error:req.params.name}); return;}
     if (req.query.set) {
       return setMemberProperty(member.name, req.query.set, req.query.value)
               .then(data => findMember(member.name))
@@ -45,11 +45,20 @@ app.get('/member/:name', function (req, res) {
   }).catch(err => res.send(err));
 });
 
+app.delete('/member/:name', function (req, res) {
+  findMember(req.params.name).then(member => {
+    if (!member) {res.send({error:req.params.name}); return;}
+    return db.querySingle("delete from member_rel where member_a=? or member_b=?", [member.id, member.id])
+             .then(data => db.querySingle("delete from member where id=?", [member.id]))
+             .then(data => res.send(data));
+  }).catch(err => res.send(err));
+});
+
 app.get('/member/:name/rel', function (req, res) {
   findMember(req.params.name).then(member => {
     if (!req.query.find) return getRelativesForMember(member, req.query.reverse);
     return db.querySingle("select * from member_rel_dict_de where relname=?", [req.query.find]).then(rel => {
-      if (!rel.length) {res.send("Unknown relation: " + req.query.find); return null;}
+      if (!rel.length) {res.send({error:req.query.find}); return null;}
       return getRelativesForMember(member, req.query.reverse, rel[0]);
     });
   })
@@ -59,11 +68,11 @@ app.get('/member/:name/rel', function (req, res) {
 
 app.post('/member/:name/rel', function (req, res) {
   findMember(req.params.name).then(memberA => {
-    if (!memberA) {res.send("Not found"); return;}
+    if (!memberA) {res.send({error:req.params.name}); return;}
     findMember(req.body.member_b).then(memberB => {
-      if (!memberB) {res.send("Not found"); return;}
+      if (!memberB) {res.send({error:req.body.member_b}); return;}
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
-        if (!rel.length) {res.send("Unknown relation: " + req.body.relation); return;}
+        if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
         return setMemberRelations(memberA, memberB, reldict.relation).then(data => {
           if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);

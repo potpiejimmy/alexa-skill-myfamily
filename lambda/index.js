@@ -66,58 +66,87 @@ MyFamily.prototype.intentHandlers = {
     "AddMemberIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                response.ask("Okay", "Was nun?");
+                response.ask("Okay, ich habe " + intent.slots.name.value + " hinzugefügt", "Was nun?");
             });
     },
     "DeleteMembersIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member', {method: 'DELETE'})
             .then(function(body) {
-                response.ask("Okay", "Was nun?");
+                response.ask("Okay, ich habe alle Personen gelöscht", "Was nun?");
+            });
+    },
+    "DeleteMemberIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value, {method: 'DELETE'})
+            .then(function(body) {
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.ask("Okay, ich habe " + intent.slots.name.value + " gelöscht", "Was nun?");
+            });
+    },
+    "SetMaleIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=gender&value=m')
+            .then(function(body) {
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.ask("Okay", "Was nun?");
+            });
+    },
+    "SetFemaleIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=gender&value=w')
+            .then(function(body) {
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.ask("Okay", "Was nun?");
             });
     },
     "SetDateOfBirthIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
             .then(function(body) {
-                response.askWithCard("Okay", "Was nun?", "Setze Geburtsdatum", intent.slots.name.value + " = " + intent.slots.birthday.value);
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.askWithCard("Okay", "Was nun?", "Setze Geburtsdatum", intent.slots.name.value + " = " + intent.slots.birthday.value);
             });
     },
     "QueryDateOfBirthIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
-                response.askWithCard(body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.askWithCard(body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
             });
     },
     "QueryAgeIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
-                response.askWithCard(body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.askWithCard(body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
             });
     },
     "QueryBirthdayIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
-                response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
+                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
             });
     },
     "SetRelationIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                response.askWithCard("Okay", "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                else response.askWithCard("Okay, " + intent.slots.name_a.value + " ist " + intent.slots.name_b.value + "s " + intent.slots.relation.value, "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
             });
     },
     "QueryRelationIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + "/rel?reverse=true&find=" + intent.slots.relation.value)
             .then(function(body) {
-                var answer = "";
-                if (!body.length) answer = "Ich habe " + intent.slots.relation.value + " von " + intent.slots.name.value + " nicht gefunden.";
-                for (i = 0; i < body.length; i++) {
-                    if (answer.length) {
-                        if (i === body.length - 1) answer += " und ";
-                        else answer += ", ";
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                else {
+                    var answer = "";
+                    if (!body.length) answer = "Ich habe " + intent.slots.relation.value + " von " + intent.slots.name.value + " nicht gefunden.";
+                    for (i = 0; i < body.length; i++) {
+                        if (answer.length) {
+                            if (i === body.length - 1) answer += " und ";
+                            else answer += ", ";
+                        }
+                        answer += body[i].name;
                     }
-                    answer += body[i].name;
+                    response.askWithCard(answer, "Was nun?", "Frage Beziehung", intent.slots.relation.value + " von " + intent.slots.name.value + " = " + answer);
                 }
-                response.askWithCard(answer, "Was nun?", "Frage Beziehung", intent.slots.relation.value + " von " + intent.slots.name.value + " = " + answer);
             });
     },
     "QuitIntent": function (intent, session, response) {

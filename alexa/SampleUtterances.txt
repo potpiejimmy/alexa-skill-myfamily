@@ -2,7 +2,14 @@ SayHelloIntent hallo
 ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 AddMemberIntent füge {name} hinzu
-DeleteMembersIntent lösche alle
+DeleteMembersIntent lösche alle personen
+DeleteMemberIntent lösche {name}
+SetMaleIntent {name} ist männlich
+SetMaleIntent {name} ist ein Mann
+SetMaleIntent {name} ist ein Junge
+SetFemaleIntent {name} ist weiblich
+SetFemaleIntent {name} ist eine Frau
+SetFemaleIntent {name} ist ein Mädchen
 SetDateOfBirthIntent {name} wurde am {birthday} geboren
 SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday}
 QueryDateOfBirthIntent wann wurde {name} geboren
