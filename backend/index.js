@@ -77,9 +77,17 @@ app.post('/member/:name/rel', function (req, res) {
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
-        return setMemberRelations(memberA, memberB, reldict.relation).then(data => {
+        return setMemberRelationsTransitive(memberA.id, memberB.id, reldict.relation).then(data => {
           if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);
-          res.send(data);
+          if (req.body.member_c) {
+            // optional: additonal member C for setting the same relation in one step
+            findMember(req.body.member_c).then(memberC => {
+              if (!memberC) {res.send({error:req.body.member_c}); return;}
+              return setMemberRelationsTransitive(memberA.id, memberC.id, reldict.relation).then(data => res.send(data));
+            });
+          } else {
+            res.send(data);
+          }
         });
       });
     });
@@ -116,22 +124,39 @@ function inverseRel(relation) {
   return relation;
 }
 
+function transRel(relationA, relationB) {
+  if (relationA == "child" && relationB == "parent") return "sibling";
+  if (relationA == "parent" && relationB == "child") return "sibling";
+  if (relationA == "sibling" && relationB == "sibling") return "sibling";
+  return null;
+}
+
+function setMemberRelationsTransitive(memberA, memberB, relation) {
+  return setMemberRelations(memberA, memberB, relation)
+         .then(res => db.querySingle("select * from member_rel where member_a=?", [memberB]))
+         .then(rels => utils.asyncLoopP(rels, (i, next) => {
+           var tr = transRel(relation, i.relation);
+           if (tr && memberA!==i.member_b) setMemberRelations(memberA, i.member_b, tr).then(data => next());
+           else next(); 
+         }));
+}
+
 function setMemberRelations(memberA, memberB, relation) {
   return setMemberRelation(memberA, memberB, relation)
          .then(res => setMemberRelation(memberB, memberA, inverseRel(relation)));
 }
 
 function setMemberRelation(memberA, memberB, relation) {
-  return db.querySingle("select * from member_rel where member_a=? and member_b=?", [memberA.id, memberB.id]).then(existing => {
+  return db.querySingle("select * from member_rel where member_a=? and member_b=?", [memberA, memberB]).then(existing => {
     if (!existing.length) {
       var newRel = {
-        member_a: memberA.id,
-        member_b: memberB.id,
+        member_a: memberA,
+        member_b: memberB,
         relation: relation
       }
       return db.querySingle("insert into member_rel set ?", [newRel]);
     } else {
-      return db.querySingle("update member_rel set relation=? where member_a=? and member_b=?", [relation, memberA.id, memberB.id]);
+      return db.querySingle("update member_rel set relation=? where member_a=? and member_b=?", [relation, memberA, memberB]);
     }
   })
 }

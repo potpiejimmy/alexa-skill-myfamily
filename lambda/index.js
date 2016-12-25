@@ -132,6 +132,13 @@ MyFamily.prototype.intentHandlers = {
                 else response.askWithCard("Okay, " + intent.slots.name_a.value + " ist " + intent.slots.name_b.value + "s " + intent.slots.relation.value, "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
             });
     },
+    "SetRelationExtIntent": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
+            .then(function(body) {
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                else response.askWithCard("Okay, " + intent.slots.name_a.value + " ist " + intent.slots.name_b.value + "s und " + intent.slots.name_c.value + "s " + intent.slots.relation.value, "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
+            });
+    },
     "QueryRelationIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + "/rel?reverse=true&find=" + intent.slots.relation.value)
             .then(function(body) {

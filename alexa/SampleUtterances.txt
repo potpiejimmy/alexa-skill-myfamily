@@ -20,6 +20,10 @@ SetRelationIntent {name_a} ist {name_b} {relation}
 SetRelationIntent {name_a} ist der {relation} von {name_b}
 SetRelationIntent {name_a} ist die {relation} von {name_b}
 SetRelationIntent {name_a} ist das {relation} von {name_b}
+SetRelationExtIntent {name_a} ist {name_b} und {name_c} {relation}
+SetRelationExtIntent {name_a} ist der {relation} von {name_b} und {name_c}
+SetRelationExtIntent {name_a} ist die {relation} von {name_b} und {name_c}
+SetRelationExtIntent {name_a} ist das {relation} von {name_b} und {name_c}
 QueryRelationIntent wer ist {name} {relation}
 QueryRelationIntent wer sind {name} {relation}
 QueryRelationIntent wer ist der {relation} von {name}
