@@ -20,7 +20,7 @@ app.get('/member', function (req, res) {
 
 app.post('/member', function (req, res) {
   findMember(req.body.name).then(member => {
-    if (member) res.send(member);
+    if (member) res.send({error:member.name});
     else {
       req.body.name = localizePhonetics_DE(req.body.name);
       db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
@@ -29,7 +29,10 @@ app.post('/member', function (req, res) {
 });
 
 app.delete('/member', function (req, res) {
-  db.querySingle("delete from member").then(data => res.send(data)).catch(err => res.send(err));
+  db.querySingle("delete from member_rel")
+    .then(data => db.querySingle("delete from member"))
+    .then(data => res.send(data))
+    .catch(err => res.send(err));
 });
 
 app.get('/member/:name', function (req, res) {

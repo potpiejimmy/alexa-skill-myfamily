@@ -66,7 +66,8 @@ MyFamily.prototype.intentHandlers = {
     "AddMemberIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                response.ask("Okay, ich habe " + intent.slots.name.value + " hinzugefügt", "Was nun?");
+                if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
+                else response.ask("Okay, ich habe " + intent.slots.name.value + " hinzugefügt", "Was nun?");
             });
     },
     "DeleteMembersIntent": function (intent, session, response) {
@@ -90,7 +91,7 @@ MyFamily.prototype.intentHandlers = {
             });
     },
     "SetFemaleIntent": function (intent, session, response) {
-        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=gender&value=w')
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=gender&value=f')
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else response.ask("Okay", "Was nun?");
