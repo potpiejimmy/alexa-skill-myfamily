@@ -138,7 +138,8 @@ function setMemberRelationsTransitive(memberA, memberB, relation) {
            var tr = transRel(relation, i.relation);
            if (tr && memberA!==i.member_b) setMemberRelations(memberA, i.member_b, tr).then(data => next());
            else next(); 
-         }));
+         }))
+         .then(res.send({result:"okay"}));
 }
 
 function setMemberRelations(memberA, memberB, relation) {
