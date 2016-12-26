@@ -139,7 +139,7 @@ function setMemberRelationsTransitive(memberA, memberB, relation) {
            if (tr && memberA!==i.member_b) setMemberRelations(memberA, i.member_b, tr).then(data => next());
            else next(); 
          }))
-         .then(() => {result:"okay"});
+         .then(() => {return {result:"okay"}});
 }
 
 function setMemberRelations(memberA, memberB, relation) {
