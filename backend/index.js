@@ -77,13 +77,13 @@ app.post('/member/:name/rel', function (req, res) {
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
-        return setMemberRelationsTransitive(memberA.id, memberB.id, reldict.relation).then(data => {
+        return setMemberRelationsRecurseAll(memberA.id, memberB.id, reldict.relation).then(data => {
           if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
-            findMember(req.body.member_c).then(memberC => {
+            return findMember(req.body.member_c).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
-              return setMemberRelationsTransitive(memberA.id, memberC.id, reldict.relation).then(data => res.send(data));
+              return setMemberRelationsRecurseAll(memberA.id, memberC.id, reldict.relation).then(data => res.send(data));
             });
           } else {
             res.send(data);
@@ -121,33 +121,49 @@ function getRelativesForMember(member, reverse, filter) {
 function inverseRel(relation) {
   if (relation == "child") return "parent";
   if (relation == "parent") return "child";
+  if (relation == "parentsibling") return "siblingchild";
+  if (relation == "siblingchild") return "parentsibling";
+  if (relation == "grandchild") return "grandparent";
+  if (relation == "grandparent") return "grandchild";
   return relation;
 }
 
 function transRel(relationA, relationB) {
   if (relationA == "child" && relationB == "parent") return "sibling";
-  if (relationA == "parent" && relationB == "child") return "sibling";
   if (relationA == "sibling" && relationB == "sibling") return "sibling";
+  if (relationA == "child" && relationB == "sibling") return "siblingchild";
+  if (relationA == "sibling" && relationB == "parent") return "parentsibling";
+  if (relationA == "siblingchild" && relationB == "parent") return "cousin";
+  if (relationA == "child" && relationB == "parentsibling") return "cousin";
+  if (relationA == "child" && relationB == "child") return "grandchild";
+  if (relationA == "parent" && relationB == "parent") return "grandparent";
+  if (relationA == "child" && relationB == "grandparent") return "parentsibling";
+  if (relationA == "grandchild" && relationB == "parent") return "siblingchild";
   return null;
 }
 
+function setMemberRelationsRecurseAll(memberA, memberB, relation) {
+  return setMemberRelations(memberA, memberB, relation, true)
+         .then(res => setMemberRelationsTransitive(memberA, memberB, relation))
+         .then(res => setMemberRelationsTransitive(memberB, memberA, inverseRel(relation)));
+}
+
 function setMemberRelationsTransitive(memberA, memberB, relation) {
-  return setMemberRelations(memberA, memberB, relation)
-         .then(res => db.querySingle("select * from member_rel where member_a=?", [memberB]))
+  return db.querySingle("select * from member_rel where member_a=?", [memberB])
          .then(rels => utils.asyncLoopP(rels, (i, next) => {
            var tr = transRel(relation, i.relation);
-           if (tr && memberA!==i.member_b) setMemberRelations(memberA, i.member_b, tr).then(data => next());
-           else next(); 
+           if (tr && memberA!==i.member_b) setMemberRelations(memberA, i.member_b, tr, false).then(data => next());
+           else next();
          }))
          .then(() => {return {result:"okay"}});
 }
 
-function setMemberRelations(memberA, memberB, relation) {
-  return setMemberRelation(memberA, memberB, relation)
-         .then(res => setMemberRelation(memberB, memberA, inverseRel(relation)));
+function setMemberRelations(memberA, memberB, relation, override) {
+  return setMemberRelation(memberA, memberB, relation, override)
+         .then(res => setMemberRelation(memberB, memberA, inverseRel(relation), override));
 }
 
-function setMemberRelation(memberA, memberB, relation) {
+function setMemberRelation(memberA, memberB, relation, override) {
   return db.querySingle("select * from member_rel where member_a=? and member_b=?", [memberA, memberB]).then(existing => {
     if (!existing.length) {
       var newRel = {
@@ -157,7 +173,10 @@ function setMemberRelation(memberA, memberB, relation) {
       }
       return db.querySingle("insert into member_rel set ?", [newRel]);
     } else {
-      return db.querySingle("update member_rel set relation=? where member_a=? and member_b=?", [relation, memberA, memberB]);
+      if (override) 
+        return db.querySingle("update member_rel set relation=? where member_a=? and member_b=?", [relation, memberA, memberB]);
+      else
+        return existing[0];
     }
   })
 }
