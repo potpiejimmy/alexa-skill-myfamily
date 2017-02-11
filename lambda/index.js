@@ -98,7 +98,7 @@ MyFamily.prototype.intentHandlers = {
             });
     },
     "SetDateOfBirthIntent": function (intent, session, response) {
-        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.birthday.value)
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.year.value + intent.slots.birthday.value.substr(4))
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else response.askWithCard("Okay", "Was nun?", "Setze Geburtsdatum", intent.slots.name.value + " = " + intent.slots.birthday.value);
@@ -122,7 +122,7 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else response.askWithCard(body.name + " hat das nächste Mal am " + body.birthday_next + " Geburtstag.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
+                else response.askWithCard(body.name + " wird am " + body.birthday_next + " " + (body.birthday_age+1) + " Jahre alt.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
             });
     },
     "SetRelationIntent": function (intent, session, response) {

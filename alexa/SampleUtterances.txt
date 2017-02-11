@@ -10,12 +10,13 @@ SetMaleIntent {name} ist ein Junge
 SetFemaleIntent {name} ist weiblich
 SetFemaleIntent {name} ist eine Frau
 SetFemaleIntent {name} ist ein Mädchen
-SetDateOfBirthIntent {name} wurde am {birthday} geboren
-SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday}
+SetDateOfBirthIntent {name} wurde am {birthday} {year} geboren
+SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday} {year}
 QueryDateOfBirthIntent wann wurde {name} geboren
 QueryDateOfBirthIntent was ist das geburtsdatum von {name}
 QueryAgeIntent wie alt ist {name}
 QueryBirthdayIntent wann hat {name} geburtstag
+QueryBirthdayIntent wie alt wird {name}
 SetRelationIntent {name_a} ist {name_b} {relation}
 SetRelationIntent {name_a} ist der {relation} von {name_b}
 SetRelationIntent {name_a} ist die {relation} von {name_b}

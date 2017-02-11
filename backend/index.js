@@ -186,8 +186,8 @@ function setMemberProperty(member, property, value) {
 }
 
 function localizePhonetics_DE(name) {
-  if (name.startsWith("chr")) name = "kr"+name.substr(3,name.length-3);
-  if (name.startsWith("cr")) name = "kr"+name.substr(2,name.length-2);
+  if (name.startsWith("chr")) name = "kr"+name.substr(3);
+  if (name.startsWith("cr")) name = "kr"+name.substr(2);
   if (name.endsWith("er")) name = name.substr(0,name.length-2) + "a";
   return name;
 }
