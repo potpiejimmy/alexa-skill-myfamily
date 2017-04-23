@@ -171,7 +171,7 @@ MyFamily.prototype.intentHandlers = {
                             var curMem = null;
                             var curRel = null;
                             rels.forEach(i => {
-                                if (i.relation != curRel) {
+                                if (i.relname != curRel) {
                                     if (curRel) rel.push(curRel);
                                     if (curMem) relMem.push(curMem);
                                     curRel = i.relname;
