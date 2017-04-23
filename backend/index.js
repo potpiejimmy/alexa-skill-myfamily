@@ -19,7 +19,7 @@ app.get('/member', function (req, res) {
 });
 
 app.post('/member', function (req, res) {
-  findMember(req.body.name).then(member => {
+  findMember(req.body.name, true).then(member => {
     if (member) res.send({error:member.name});
     else {
       req.body.name = localizePhonetics_DE(req.body.name);
@@ -192,10 +192,16 @@ function localizePhonetics_DE(name) {
   return name;
 }
 
-function findMember(name) {
+function findMember(name, noFallback) {
   var phoneticName = localizePhonetics_DE(name);
   return db.querySingle("select * from member where name sounds like ?", [phoneticName]).then(data => {
-    if (data.length === 0) return null;
+    if (data.length === 0) {
+      if (noFallback) return null;
+      return db.querySingle("select * from member where substr(name,1,4) sounds like ?", [phoneticName.substring(0,4)]).then(data => {
+        if (data.length === 0) return null;
+        return calcMemberBirthday(data[0]);
+      });
+    }
     return calcMemberBirthday(data[0]);
   });
 }
