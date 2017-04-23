@@ -129,14 +129,14 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
-                else response.askWithCard("Okay, " + intent.slots.name_a.value + " ist " + intent.slots.name_b.value + "s " + intent.slots.relation.value, "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
+                else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + " = " + body.relation);
             });
     },
     "SetRelationExtIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
-                else response.askWithCard("Okay, " + intent.slots.name_a.value + " ist " + intent.slots.name_b.value + "s und " + intent.slots.name_c.value + "s " + intent.slots.relation.value, "Was nun?", "Setze Beziehung", intent.slots.name_a.value + " zu " + intent.slots.name_b.value + " = " + intent.slots.relation.value);
+                else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
             });
     },
     "QueryRelationIntent": function (intent, session, response) {
@@ -154,6 +154,51 @@ MyFamily.prototype.intentHandlers = {
                         answer += body[i].name;
                     }
                     response.askWithCard(answer, "Was nun?", "Frage Beziehung", intent.slots.relation.value + " von " + intent.slots.name.value + " = " + answer);
+                }
+            });
+    },
+    "QueryMemberRelations": function (intent, session, response) {
+        invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value)
+            .then(function(member) {
+                if (member.error) response.ask("Ich kenne die Person " + member.error + " nicht", "Was nun?");
+                else {
+                    invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
+                        if (rels.length === 0) response.ask("Du hast noch keine Beziehungsinformationen zu " + member.name + " hinterlegt.", "Was nun?");
+                        else {
+                            var answer = member.name + " ist ";
+                            var rel = [];
+                            var relMem = [];
+                            var curMem = null;
+                            var curRel = null;
+                            rels.forEach(i => {
+                                if (i.relation != curRel) {
+                                    if (curRel) rel.push(curRel);
+                                    if (curMem) relMem.push(curMem);
+                                    curRel = i.relname;
+                                    curMem = [];
+                                }
+                                curMem.push(i.name);
+                            });
+                            rel.push(curRel);
+                            relMem.push(curMem);
+
+                            for (i = 0; i < rel.length; i++) {
+                                if (i) {
+                                    if (i === rel.length - 1) answer += " und ";
+                                    else answer += ", ";
+                                }
+                                for (j = 0; j < relMem[i].length; j++) {
+                                    if (j) {
+                                        if (j === relMem[i].length - 1) answer += " und ";
+                                        else answer += ", ";
+                                    }
+                                    answer += relMem[i][j] + "s";
+                                }
+                                answer += " " + rel[i];
+                            }
+                            response.askWithCard(answer, "Was nun?", "Anfrage Beziehungen", answer);
+                        }
+                    });
                 }
             });
     },

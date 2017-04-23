@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS `member_rel_dict_de` (
   `relname` VARCHAR(45) NOT NULL,
   `relation` VARCHAR(45) NOT NULL,
   `gender` CHAR(1) NULL,
+  `prio` TINYINT NULL,
   PRIMARY KEY (`relname`))
 ENGINE = InnoDB;
 

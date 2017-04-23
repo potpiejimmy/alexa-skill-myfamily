@@ -31,6 +31,7 @@ QueryRelationIntent wer ist der {relation} von {name}
 QueryRelationIntent wer ist die {relation} von {name}
 QueryRelationIntent wer ist das {relation} von {name}
 QueryRelationIntent wer sind die {relation} von {name}
+QueryMemberRelations wer ist {name}
 QuitIntent ende
 QuitIntent auf wiedersehen
 QuitIntent tschüs

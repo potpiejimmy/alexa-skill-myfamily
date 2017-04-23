@@ -14,6 +14,7 @@
     {"intent": "SetRelationIntent", "slots": [{"name": "name_a", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "SetRelationExtIntent", "slots": [{"name": "name_a", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_c", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "QueryRelationIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
+    {"intent": "QueryMemberRelations", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "QuitIntent"},
     {"intent": "AMAZON.HelpIntent"}
   ]

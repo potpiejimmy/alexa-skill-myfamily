@@ -59,7 +59,7 @@ app.delete('/member/:name', function (req, res) {
 
 app.get('/member/:name/rel', function (req, res) {
   findMember(req.params.name).then(member => {
-    if (!req.query.find) return getRelativesForMember(member, req.query.reverse);
+    if (!req.query.find) return getRelativesForMember(member, req.query.reverse, null, req.query.resolveDict);
     return db.querySingle("select * from member_rel_dict_de where relname=?", [req.query.find]).then(rel => {
       if (!rel.length) {res.send({error:req.query.find}); return null;}
       return getRelativesForMember(member, req.query.reverse, rel[0]);
@@ -83,10 +83,21 @@ app.post('/member/:name/rel', function (req, res) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.body.member_c).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
-              return setMemberRelationsRecurseAll(memberA.id, memberC.id, reldict.relation).then(data => res.send(data));
+              return setMemberRelationsRecurseAll(memberA.id, memberC.id, reldict.relation).then(data => {
+                res.send({
+                  member_a: memberA.name,
+                  member_b: memberB.name,
+                  member_c: memberC.name,
+                  relation: req.body.relation
+                })
+              });
             });
           } else {
-            res.send(data);
+            res.send({
+              member_a: memberA.name,
+              member_b: memberB.name,
+              relation: req.body.relation
+            })
           }
         });
       });
@@ -94,14 +105,19 @@ app.post('/member/:name/rel', function (req, res) {
   }).catch(err => res.send(err));
 });
 
-function getRelativesForMember(member, reverse, filter) {
+function getRelativesForMember(member, reverse, filter, resolveDict) {
   var aOrB = reverse ? "member_b" : "member_a";
   var bOrA = reverse ? "member_a" : "member_b";
-  var stmt = "select * from member_rel,member where member.id=" + bOrA + " and " + aOrB + "=?";
-  var args = [member.id];
+  var stmt = "select * from member_rel,member";
+  if (resolveDict) stmt += ",member_rel_dict_de where member_rel_dict_de.relation=member_rel.relation and member_rel_dict_de.gender=? and member_rel_dict_de.prio=1 and";
+  else stmt += " where";
+  stmt +=" member.id=" + bOrA + " and " + aOrB + "=?";
+  var args = [];
+  if (resolveDict) args.push(member.gender);
+  args.push(member.id);
   if (filter) {
     if (filter.relation) {
-      stmt += " and relation=?";
+      stmt += " and member_rel.relation=?";
       args.push(filter.relation);
     }
     if (filter.gender) {
@@ -110,11 +126,12 @@ function getRelativesForMember(member, reverse, filter) {
         stmt += " and member.id<0"; // filter nothing
       }
       if (reverse) {
-        stmt += " and gender=?";
+        stmt += " and member.gender=?";
         args.push(filter.gender);
       }
     }
   }
+  stmt += " order by member_rel.relation";
   return db.querySingle(stmt, args);
 };
 
