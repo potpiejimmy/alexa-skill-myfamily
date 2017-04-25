@@ -15,32 +15,33 @@ app.get('/db', function (req, res) {
 })
 
 app.get('/member', function (req, res) {
-  db.querySingle("select * from member").then(data => res.send(data)).catch(err => res.send(err));
+  db.querySingle("select * from member where userid=?",[req.query.userid]).then(data => res.send(data)).catch(err => res.send(err));
 });
 
 app.post('/member', function (req, res) {
-  findMember(req.body.name, true).then(member => {
+  findMember(req.query.userid, req.body.name, true).then(member => {
     if (member) res.send({error:member.name});
     else {
       req.body.name = localizePhonetics_DE(req.body.name);
+      req.body.userid = req.query.userid;
       db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
     }
   }).catch(err => res.send(err));
 });
 
 app.delete('/member', function (req, res) {
-  db.querySingle("delete from member_rel")
-    .then(data => db.querySingle("delete from member"))
+  db.querySingle("delete r from member_rel r join member m on r.member_a=m.id where m.userid=?",[req.query.userid])
+    .then(data => db.querySingle("delete from member where userid=?",[req.query.userid]))
     .then(data => res.send(data))
     .catch(err => res.send(err));
 });
 
 app.get('/member/:name', function (req, res) {
-  findMember(req.params.name).then(member => {
+  findMember(req.query.userid, req.params.name).then(member => {
     if (!member) {res.send({error:req.params.name}); return;}
     if (req.query.set) {
       return setMemberProperty(member.name, req.query.set, req.query.value)
-              .then(data => findMember(member.name))
+              .then(data => findMember(req.query.userid, member.name))
               .then(updatedMember => res.send(updatedMember));
     } else {
       res.send(member);
@@ -49,7 +50,7 @@ app.get('/member/:name', function (req, res) {
 });
 
 app.delete('/member/:name', function (req, res) {
-  findMember(req.params.name).then(member => {
+  findMember(req.query.userid, req.params.name).then(member => {
     if (!member) {res.send({error:req.params.name}); return;}
     return db.querySingle("delete from member_rel where member_a=? or member_b=?", [member.id, member.id])
              .then(data => db.querySingle("delete from member where id=?", [member.id]))
@@ -58,7 +59,7 @@ app.delete('/member/:name', function (req, res) {
 });
 
 app.get('/member/:name/rel', function (req, res) {
-  findMember(req.params.name).then(member => {
+  findMember(req.query.userid, req.params.name).then(member => {
     if (!req.query.find) return getRelativesForMember(member, req.query.reverse, null, req.query.resolveDict);
     return db.querySingle("select * from member_rel_dict_de where relname=?", [req.query.find]).then(rel => {
       if (!rel.length) {res.send({error:req.query.find}); return null;}
@@ -70,9 +71,9 @@ app.get('/member/:name/rel', function (req, res) {
 });
 
 app.post('/member/:name/rel', function (req, res) {
-  findMember(req.params.name).then(memberA => {
+  findMember(req.query.userid, req.params.name).then(memberA => {
     if (!memberA) {res.send({error:req.params.name}); return;}
-    findMember(req.body.member_b).then(memberB => {
+    findMember(req.query.userid, req.body.member_b).then(memberB => {
       if (!memberB) {res.send({error:req.body.member_b}); return;}
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
@@ -81,7 +82,7 @@ app.post('/member/:name/rel', function (req, res) {
           if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
-            return findMember(req.body.member_c).then(memberC => {
+            return findMember(req.query.userid, req.body.member_c).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
               return setMemberRelationsRecurseAll(memberA.id, memberC.id, reldict.relation).then(data => {
                 res.send({
@@ -205,16 +206,18 @@ function setMemberProperty(member, property, value) {
 function localizePhonetics_DE(name) {
   if (name.startsWith("chr")) name = "kr"+name.substr(3);
   if (name.startsWith("cr")) name = "kr"+name.substr(2);
+  if (name.startsWith("cl")) name = "kl"+name.substr(2);
+  if (name.startsWith("cn")) name = "kn"+name.substr(2);
   if (name.endsWith("er")) name = name.substr(0,name.length-2) + "a";
   return name;
 }
 
-function findMember(name, noFallback) {
+function findMember(userid, name, noFallback) {
   var phoneticName = localizePhonetics_DE(name);
-  return db.querySingle("select * from member where name sounds like ?", [phoneticName]).then(data => {
+  return db.querySingle("select * from member where userid=? and name sounds like ?", [userid, phoneticName]).then(data => {
     if (data.length === 0) {
       if (noFallback) return null;
-      return db.querySingle("select * from member where substr(name,1,4) sounds like ?", [phoneticName.substring(0,4)]).then(data => {
+      return db.querySingle("select * from member where userid=? and substr(name,1,4) sounds like ?", [userid, phoneticName.substring(0,4)]).then(data => {
         if (data.length === 0) return null;
         return calcMemberBirthday(data[0]);
       });
