@@ -128,31 +128,25 @@ MyFamily.prototype.intentHandlers = {
     "SetRelationIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
                 else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + " = " + body.relation);
             });
     },
     "SetRelationExtIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
                 else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
             });
     },
     "QueryRelationIntent": function (intent, session, response) {
         invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + "/rel?reverse=true&find=" + intent.slots.relation.value)
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
                 else {
-                    var answer = "";
+                    var answer;
                     if (!body.length) answer = "Ich habe " + intent.slots.relation.value + " von " + intent.slots.name.value + " nicht gefunden.";
-                    for (i = 0; i < body.length; i++) {
-                        if (answer.length) {
-                            if (i === body.length - 1) answer += " und ";
-                            else answer += ", ";
-                        }
-                        answer += body[i].name;
-                    }
+                    else answer = arrayToSpeech(body, element => element.name);
                     response.askWithCard(answer, "Was nun?", "Frage Beziehung", intent.slots.relation.value + " von " + intent.slots.name.value + " = " + answer);
                 }
             });
@@ -165,7 +159,6 @@ MyFamily.prototype.intentHandlers = {
                     invokeBackend(BACKEND_URL+'/member/' + intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
                         if (rels.length === 0) response.ask("Du hast noch keine Beziehungsinformationen zu " + member.name + " hinterlegt.", "Was nun?");
                         else {
-                            var answer = member.name + " ist ";
                             var rel = [];
                             var relMem = [];
                             var curMem = null;
@@ -182,20 +175,8 @@ MyFamily.prototype.intentHandlers = {
                             rel.push(curRel);
                             relMem.push(curMem);
 
-                            for (i = 0; i < rel.length; i++) {
-                                if (i) {
-                                    if (i === rel.length - 1) answer += " und ";
-                                    else answer += ", ";
-                                }
-                                for (j = 0; j < relMem[i].length; j++) {
-                                    if (j) {
-                                        if (j === relMem[i].length - 1) answer += " und ";
-                                        else answer += ", ";
-                                    }
-                                    answer += relMem[i][j] + "s";
-                                }
-                                answer += " " + rel[i];
-                            }
+                            var answer = member.name + " ist ";
+                            answer += arrayToSpeech(rel, (r, i) => arrayToSpeech(relMem[i], m => m + "s") + " " + r);
                             response.askWithCard(answer, "Was nun?", "Anfrage Beziehungen", answer);
                         }
                     });
@@ -209,6 +190,18 @@ MyFamily.prototype.intentHandlers = {
         response.ask("Sag hallo.", "Sag hallo.");
     }
 };
+
+function arrayToSpeech(elements, appender) {
+    var result = "";
+    for (var i = 0; i < elements.length; i++) {
+        if (i) {
+            if (i === elements.length - 1) result += " und ";
+            else result += ", ";
+        }
+        result += appender(elements[i], i);
+    }
+    return result;
+}
 
 function invokeBackend(url, options) {
     return nodeFetch(url, options)
