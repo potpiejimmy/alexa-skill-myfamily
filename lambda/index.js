@@ -1,7 +1,8 @@
 /**
  * App ID for the skill
+ * Prod: 'amzn1.ask.skill.a011a313-560a-42fc-a514-9fcdc5ce5ef8'
  */
-var APP_ID = 'amzn1.ask.skill.a011a313-560a-42fc-a514-9fcdc5ce5ef8';
+var APP_ID = process.env.APP_ID;
 var BACKEND_URL = 'http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com';
 
 /**
@@ -54,11 +55,7 @@ MyFamily.prototype.intentHandlers = {
                 if (body.length === 0)
                     response.ask("Es sind keine Familienmitglieder vorhanden", "Was nun?");
                 else {
-                    var members = "";
-                    body.forEach(m => {
-                        if (members.length > 0) members += ", ";
-                        members += m.name;
-                    })
+                    var members = arrayToSpeech(body, m => m.name);
                     response.askWithCard("Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
                 }
             });
@@ -159,24 +156,9 @@ MyFamily.prototype.intentHandlers = {
                     invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
                         if (rels.length === 0) response.ask("Du hast noch keine Beziehungsinformationen zu " + member.name + " hinterlegt.", "Was nun?");
                         else {
-                            var rel = [];
-                            var relMem = [];
-                            var curMem = null;
-                            var curRel = null;
-                            rels.forEach(i => {
-                                if (i.relname != curRel) {
-                                    if (curRel) rel.push(curRel);
-                                    if (curMem) relMem.push(curMem);
-                                    curRel = i.relname;
-                                    curMem = [];
-                                }
-                                curMem.push(i.name);
-                            });
-                            rel.push(curRel);
-                            relMem.push(curMem);
-
+                            var relmap = groupBy(rels, r => r.relname);
                             var answer = member.name + " ist ";
-                            answer += arrayToSpeech(rel, (r, i) => arrayToSpeech(relMem[i], m => m + "s") + " " + r);
+                            answer += arrayToSpeech(Object.keys(relmap), r => arrayToSpeech(relmap[r], m => m.name + "s") + " " + r);
                             response.askWithCard(answer, "Was nun?", "Anfrage Beziehungen", answer);
                         }
                     });
@@ -191,6 +173,18 @@ MyFamily.prototype.intentHandlers = {
     }
 };
 
+function groupBy(elements, criteria) {
+    var groups = {};
+    elements.forEach(i => {
+        var crit = criteria(i);
+        var mems = groups[crit];
+        if (!mems) mems = [];
+        mems.push(i);
+        groups[crit] = mems;
+    });
+    return groups;
+}
+
 function arrayToSpeech(elements, appender) {
     var result = "";
     for (var i = 0; i < elements.length; i++) {
@@ -198,7 +192,7 @@ function arrayToSpeech(elements, appender) {
             if (i === elements.length - 1) result += " und ";
             else result += ", ";
         }
-        result += appender(elements[i], i);
+        result += appender(elements[i]);
     }
     return result;
 }
