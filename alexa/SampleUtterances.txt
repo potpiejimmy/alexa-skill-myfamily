@@ -1,4 +1,6 @@
-SayHelloIntent hallo
+AddInitialMemberIntent {name}
+AddInitialMemberMaleIntent männlich
+AddInitialMemberFemaleIntent weiblich
 ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 AddMemberIntent füge {name} hinzu

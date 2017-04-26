@@ -22,12 +22,16 @@ app.post('/member', function (req, res) {
   findMember(req.query.userid, req.body.name, true).then(member => {
     if (member) res.send({error:member.name});
     else {
-      req.body.name = localizePhonetics_DE(req.body.name);
-      req.body.userid = req.query.userid;
-      db.querySingle("insert into member set ?", [req.body]).then(data => res.send(data));
+      addMember(req, req.body).then(data => res.send(data));
     }
   }).catch(err => res.send(err));
 });
+
+addMember(req, member) {
+  member.name = localizePhonetics_DE(member.name);
+  member.userid = req.query.userid;
+  db.querySingle("insert into member set ?", [member]).then(() => findMember(req.query.userid, member.name));
+}
 
 app.delete('/member', function (req, res) {
   db.querySingle("delete r from member_rel r join member m on r.member_a=m.id where m.userid=?",[req.query.userid])
@@ -71,10 +75,18 @@ app.get('/member/:name/rel', function (req, res) {
 });
 
 app.post('/member/:name/rel', function (req, res) {
+  var finishedResponse = false;
   findMember(req.query.userid, req.params.name).then(memberA => {
-    if (!memberA) {res.send({error:req.params.name}); return;}
     findMember(req.query.userid, req.body.member_b).then(memberB => {
-      if (!memberB) {res.send({error:req.body.member_b}); return;}
+      if (!memberA && !memberB) {res.send({error:req.params.name}); finishedResponse = true; return;} // both unknown, not allowed
+      if (!memberB) return addMember(req, req.body.member_b); else return memberB; // add B on the fly if not found
+    }).then(memberB => {
+      if (finishedResponse) return;
+      if (!memberB) {res.send({error:req.body.member_b}); finishedResponse = true; return;} // both unknown, not allowed
+      if (!memberA) return addMember(req, req.params.name); else return memberA;  // add A on the fly if not found
+    }).then(memberA => {
+      if (finishedResponse) return;
+      if (!memberA) {res.send({error:req.params.name}); return;}
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
@@ -83,6 +95,8 @@ app.post('/member/:name/rel', function (req, res) {
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.query.userid, req.body.member_c).then(memberC => {
+              if (!memberC) return addMember(req, req.body.member_c); else return memberC; // add C on the fly if not found
+            }).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
               return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
                 res.send({

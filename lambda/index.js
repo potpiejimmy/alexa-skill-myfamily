@@ -27,9 +27,15 @@ MyFamily.prototype.constructor = MyFamily;
 
 MyFamily.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
     console.log("MyFamily onLaunch requestId: " + launchRequest.requestId + ", sessionId: " + session.sessionId);
-    var speechOutput = "Willkommen bei deiner Familie.";
-    var repromptText = "Sag hallo.";
-    response.ask(speechOutput, repromptText);
+    invokeBackend(session, BACKEND_URL+'/member').then(body => {
+        if (body.length === 0) {
+            session.attributes.dialogstatus = 'addinitial';
+            response.ask("Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. Verrate mir zuerst deinen Vornamen. Wie heißt du?", "Wie heißt du?");
+        } else {
+            var members = arrayToSpeech(body, m => m.name);
+            response.askWithCard("Willkommen. Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
+        }
+    });
 };
 
 MyFamily.prototype.eventHandlers.onSessionStarted = function (sessionStartedRequest, session) {
@@ -46,8 +52,14 @@ MyFamily.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest,
 
 MyFamily.prototype.intentHandlers = {
     // register custom intent handlers
-    "SayHelloIntent": function (intent, session, response) {
-        response.askWithCard("Hallo Familie Liese.", "Was nun?", "Hallo Familie Liese", "Hallo Familie Liese");
+    "AddInitialMemberIntent": function (intent, session, response) {
+        setInitialMember(intent, session, response);
+    },
+    "AddInitialMemberMaleIntent": function (intent, session, response) {
+        setInitialMemberGender(intent, session, response, 'm', 'männliche');
+    },
+    "AddInitialMemberFemaleIntent": function (intent, session, response) {
+        setInitialMemberGender(intent, session, response, 'f', 'weibliche');
     },
     "ListMembersIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member')
@@ -179,6 +191,30 @@ MyFamily.prototype.intentHandlers = {
         response.ask("Sag hallo.", "Sag hallo.");
     }
 };
+
+function setInitialMember(intent, session, response) {
+    if (session.attributes.dialogstatus == 'addinitial') {
+        var name = intent.slots.name.value;
+        session.attributes.dialogstatus = 'addinitialgender';
+        session.attributes.initialmember = name;
+        response.ask("Hallo " + name + ". Ist " + name + " ein männlicher oder ein weiblicher Vorname?", "Sage männlich oder weiblich");
+    } else {
+        response.ask("Ich habe dich leider nicht verstanden, sage zum Beispiel wer ist Max oder wie alt ist David.");
+    }
+}
+
+function setInitialMemberGender(intent, session, response, gender, genderfull) {
+    if (session.attributes.dialogstatus == 'addinitialgender') {
+        var name = session.attributes.initialmember;
+        session.attributes.dialogstatus = null;
+        invokeBackend(session, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender}), headers: {"Content-Type": "application/json"}}).then(body => {
+            if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
+            else response.ask("Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: David ist " + name + "s Sohn", "Was nun?");
+        });
+    } else {
+        response.ask("Ich habe dich leider nicht verstanden, sage zum Beispiel wer ist Max oder wie alt ist David.");
+    }
+}
 
 function groupBy(elements, criteria) {
     var groups = {};
