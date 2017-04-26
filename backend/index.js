@@ -78,13 +78,13 @@ app.post('/member/:name/rel', function (req, res) {
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
-        return setMemberRelationsRecurseAll(memberA.id, memberB.id, reldict.relation).then(data => {
+        return setMemberRelationsRecurseAll(memberA.id, memberB.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
           if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.query.userid, req.body.member_c).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
-              return setMemberRelationsRecurseAll(memberA.id, memberC.id, reldict.relation).then(data => {
+              return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
                 res.send({
                   member_a: memberA.name,
                   member_b: memberB.name,

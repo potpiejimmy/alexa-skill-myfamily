@@ -25,9 +25,9 @@ SetRelationExtIntent {name_a} ist {name_b} und {name_c} {relation}
 SetRelationExtIntent {name_a} ist der {relation} von {name_b} und {name_c}
 SetRelationExtIntent {name_a} ist die {relation} von {name_b} und {name_c}
 SetRelationExtIntent {name_a} ist das {relation} von {name_b} und {name_c}
-SetRelationExtIntentInv {name_b} und {name_c} sind {name_a} {relation}
-SetRelationExtIntentInv {name_a} {relation} sind {name_b} und {name_c}
-SetRelationExtIntentInv {name_b} und {name_c} sind die {relation} von {name_a}
+SetRelationExtInvIntent {name_b} und {name_c} sind {name_a} {relation}
+SetRelationExtInvIntent {name_a} {relation} sind {name_b} und {name_c}
+SetRelationExtInvIntent {name_b} und {name_c} sind die {relation} von {name_a}
 QueryRelationIntent wer ist {name} {relation}
 QueryRelationIntent wer sind {name} {relation}
 QueryRelationIntent wer ist der {relation} von {name}
