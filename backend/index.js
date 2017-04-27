@@ -70,17 +70,20 @@ app.get('/member/:name/rel', function (req, res) {
 
 app.post('/member/:name/rel', function (req, res) {
   var finishedResponse = false;
-  findMember(req.query.userid, req.params.name).then(memberA => {
-    findMember(req.query.userid, req.body.member_b).then(memberB => {
-      if (!memberA && !memberB) {res.send({error:req.params.name}); finishedResponse = true; return;} // both unknown, not allowed
-      if (!memberB) return addMember(req, req.body.member_b); else return memberB; // add B on the fly if not found
-    }).then(memberB => {
+  var memberA, memberB;
+  findMember(req.query.userid, req.params.name).then(ma => {
+    findMember(req.query.userid, req.body.member_b).then(mb => {
+      if (!ma && !mb) {res.send({error:req.params.name}); finishedResponse = true; return;} // both unknown, not allowed
+      if (!mb) return addMember(req, {name:req.body.member_b}); else return mb; // add B on the fly if not found
+    }).then(mb => {
       if (finishedResponse) return;
-      if (!memberB) {res.send({error:req.body.member_b}); finishedResponse = true; return;} // both unknown, not allowed
-      if (!memberA) return addMember(req, req.params.name); else return memberA;  // add A on the fly if not found
-    }).then(memberA => {
+      if (!mb) {res.send({error:req.body.member_b}); finishedResponse = true; return;} // still unknown, not allowed
+      memberB = mb;
+      if (!ma) return addMember(req, {name:req.params.name}); else return ma;  // add A on the fly if not found
+    }).then(ma => {
       if (finishedResponse) return;
-      if (!memberA) {res.send({error:req.params.name}); return;}
+      if (!ma) {res.send({error:req.params.name}); return;} // still unknown, not allowed
+      memberA = ma;
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
@@ -89,7 +92,7 @@ app.post('/member/:name/rel', function (req, res) {
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.query.userid, req.body.member_c).then(memberC => {
-              if (!memberC) return addMember(req, req.body.member_c); else return memberC; // add C on the fly if not found
+              if (!memberC) return addMember(req, {name:req.body.member_c}); else return memberC; // add C on the fly if not found
             }).then(memberC => {
               if (!memberC) {res.send({error:req.body.member_c}); return;}
               return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
@@ -117,7 +120,7 @@ app.post('/member/:name/rel', function (req, res) {
 function addMember(req, member) {
   member.name = localizePhonetics_DE(member.name);
   member.userid = req.query.userid;
-  db.querySingle("insert into member set ?", [member]).then(() => findMember(req.query.userid, member.name));
+  return db.querySingle("insert into member set ?", [member]).then(() => findMember(req.query.userid, member.name));
 }
 
 function getRelativesForMember(member, reverse, filter, resolveDict) {
@@ -222,6 +225,7 @@ function localizePhonetics_DE(name) {
   if (name.startsWith("cr")) name = "kr"+name.substr(2);
   if (name.startsWith("cl")) name = "kl"+name.substr(2);
   if (name.startsWith("cn")) name = "kn"+name.substr(2);
+  if (name.startsWith("v")) name = "w"+name.substr(1);
   if (name.endsWith("er")) name = name.substr(0,name.length-2) + "a";
   return name;
 }
