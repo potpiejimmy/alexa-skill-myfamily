@@ -82,7 +82,8 @@ MyFamily.prototype.intentHandlers = {
     "DeleteMembersIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member', {method: 'DELETE'})
             .then(function(body) {
-                response.ask("Okay, ich habe alle Personen gelöscht", "Was nun?");
+                session.attributes.dialogstatus = 'addinitial';
+                response.ask("Okay, ich habe alle Personen gelöscht. Beginnen wir von vorne. Wie heißt du?", "Wie heißt du?");
             });
     },
     "DeleteMemberIntent": function (intent, session, response) {
@@ -137,21 +138,23 @@ MyFamily.prototype.intentHandlers = {
     "SetRelationIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
                 else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + " = " + body.relation);
             });
     },
     "SetRelationExtIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
+                else if (body.error_c) response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation + ". " + body.error_c + " habe ich leider nicht gefunden.", "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.error_c + "(?) = " + body.relation);
                 else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
             });
     },
     "SetRelationExtInvIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel?inverse=true", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
+                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
+                else if (body.error_c) response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation + ". " + body.error_c + " habe ich leider nicht gefunden.", "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.error_c + "(?) = " + body.relation);
                 else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
             });
     },
@@ -173,7 +176,7 @@ MyFamily.prototype.intentHandlers = {
                 if (member.error) response.ask("Ich kenne die Person " + member.error + " nicht", "Was nun?");
                 else {
                     invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
-                        if (rels.length === 0) response.ask("Du hast noch keine Beziehungsinformationen zu " + member.name + " hinterlegt.", "Was nun?");
+                        if (rels.length === 0) response.ask("Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage " + member.name + " ist männlich oder " + member.name + " ist weiblich.", "Was nun?");
                         else {
                             var relmap = groupBy(rels, r => r.relname);
                             var answer = member.name + " ist ";
@@ -192,6 +195,16 @@ MyFamily.prototype.intentHandlers = {
     }
 };
 
+function currentDialogInstructions(session) {
+    if (session.attributes.dialogstatus == 'addinitial') {
+        return "Bitte sage einen Vornamen.";
+    } else if (session.attributes.dialogstatus == 'addinitialgender') {
+        return "Sage männlich oder weiblich.";
+    } else {
+        return "Sage zum Beispiel: wer ist Max, oder: wie alt ist David.";
+    }
+}
+
 function setInitialMember(intent, session, response) {
     if (session.attributes.dialogstatus == 'addinitial') {
         var name = intent.slots.name.value;
@@ -199,7 +212,7 @@ function setInitialMember(intent, session, response) {
         session.attributes.initialmember = name;
         response.ask("Hallo " + name + ". Ist " + name + " ein männlicher oder ein weiblicher Vorname?", "Sage männlich oder weiblich");
     } else {
-        response.ask("Ich habe dich leider nicht verstanden, sage zum Beispiel wer ist Max oder wie alt ist David.");
+        response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session));
     }
 }
 
@@ -209,10 +222,10 @@ function setInitialMemberGender(intent, session, response, gender, genderfull) {
         session.attributes.dialogstatus = null;
         invokeBackend(session, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender}), headers: {"Content-Type": "application/json"}}).then(body => {
             if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
-            else response.ask("Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: David ist " + name + "s Sohn", "Was nun?");
+            else response.ask("Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: David ist " + name + "s Sohn, oder: die Freundin von " + name + " ist Claudia.", "Was nun?");
         });
     } else {
-        response.ask("Ich habe dich leider nicht verstanden, sage zum Beispiel wer ist Max oder wie alt ist David.");
+        response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session));
     }
 }
 

@@ -3,7 +3,6 @@ AddInitialMemberMaleIntent männlich
 AddInitialMemberFemaleIntent weiblich
 ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
-AddMemberIntent füge {name} hinzu
 DeleteMembersIntent lösche alle personen
 DeleteMemberIntent lösche {name}
 SetMaleIntent {name} ist männlich
@@ -23,6 +22,10 @@ SetRelationIntent {name_a} ist {name_b} {relation}
 SetRelationIntent {name_a} ist der {relation} von {name_b}
 SetRelationIntent {name_a} ist die {relation} von {name_b}
 SetRelationIntent {name_a} ist das {relation} von {name_b}
+SetRelationIntent {name_b} {relation} ist {name_a}
+SetRelationIntent der {relation} von {name_b} ist {name_a}
+SetRelationIntent die {relation} von {name_b} ist {name_a}
+SetRelationIntent das {relation} von {name_b} ist {name_a}
 SetRelationExtIntent {name_a} ist {name_b} und {name_c} {relation}
 SetRelationExtIntent {name_a} ist der {relation} von {name_b} und {name_c}
 SetRelationExtIntent {name_a} ist die {relation} von {name_b} und {name_c}

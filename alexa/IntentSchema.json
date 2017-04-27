@@ -4,7 +4,6 @@
     {"intent": "AddInitialMemberMaleIntent"},
     {"intent": "AddInitialMemberFemaleIntent"},
     {"intent": "ListMembersIntent"},
-    {"intent": "AddMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "DeleteMembersIntent"},
     {"intent": "DeleteMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "SetMaleIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},

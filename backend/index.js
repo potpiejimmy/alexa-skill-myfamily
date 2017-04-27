@@ -69,21 +69,12 @@ app.get('/member/:name/rel', function (req, res) {
 });
 
 app.post('/member/:name/rel', function (req, res) {
-  var finishedResponse = false;
-  var memberA, memberB;
-  findMember(req.query.userid, req.params.name).then(ma => {
-    findMember(req.query.userid, req.body.member_b).then(mb => {
-      if (!ma && !mb) {res.send({error:req.params.name}); finishedResponse = true; return;} // both unknown, not allowed
-      if (!mb) return addMember(req, {name:req.body.member_b}); else return mb; // add B on the fly if not found
-    }).then(mb => {
-      if (finishedResponse) return;
-      if (!mb) {res.send({error:req.body.member_b}); finishedResponse = true; return;} // still unknown, not allowed
-      memberB = mb;
-      if (!ma) return addMember(req, {name:req.params.name}); else return ma;  // add A on the fly if not found
-    }).then(ma => {
-      if (finishedResponse) return;
-      if (!ma) {res.send({error:req.params.name}); return;} // still unknown, not allowed
-      memberA = ma;
+  findMember(req.query.userid, req.body.member_b).then(memberB => {
+    if (!memberB) {res.send({error:req.body.member_b}); return;} // unknown, not allowed
+    return findMember(req.query.userid, req.params.name).then(memberA => {
+      if (!memberA && !req.query.inverse) return addMember(req, {name:req.params.name}); else return memberA;  // add A on the fly if not found (only in non-inverse mode)
+    }).then(memberA => {
+      if (!memberA) {res.send({error:req.params.name}); return;} // adding failed or inverse mode, not allowed
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
@@ -92,24 +83,30 @@ app.post('/member/:name/rel', function (req, res) {
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.query.userid, req.body.member_c).then(memberC => {
-              if (!memberC) return addMember(req, {name:req.body.member_c}); else return memberC; // add C on the fly if not found
-            }).then(memberC => {
-              if (!memberC) {res.send({error:req.body.member_c}); return;}
-              return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
+              if (!memberC) {
                 res.send({
                   member_a: memberA.name,
                   member_b: memberB.name,
-                  member_c: memberC.name,
-                  relation: req.body.relation
-                })
-              });
+                  relation: req.body.relation,
+                  error_c:  req.body.member_c
+                });
+              } else {
+                return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
+                  res.send({
+                    member_a: memberA.name,
+                    member_b: memberB.name,
+                    member_c: memberC.name,
+                    relation: req.body.relation
+                  });
+                });
+              }
             });
           } else {
             res.send({
               member_a: memberA.name,
               member_b: memberB.name,
               relation: req.body.relation
-            })
+            });
           }
         });
       });
