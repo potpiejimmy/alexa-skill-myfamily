@@ -1,6 +1,8 @@
 {
   "intents": [
-    {"intent": "SayHelloIntent"},
+    {"intent": "AddInitialMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
+    {"intent": "AddInitialMemberMaleIntent"},
+    {"intent": "AddInitialMemberFemaleIntent"},
     {"intent": "ListMembersIntent"},
     {"intent": "AddMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "DeleteMembersIntent"},
@@ -13,6 +15,7 @@
     {"intent": "QueryBirthdayIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "SetRelationIntent", "slots": [{"name": "name_a", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "SetRelationExtIntent", "slots": [{"name": "name_a", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_c", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
+    {"intent": "SetRelationExtInvIntent", "slots": [{"name": "name_a", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_c", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "QueryRelationIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "QueryMemberRelations", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "QuitIntent"},

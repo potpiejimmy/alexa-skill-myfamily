@@ -27,12 +27,6 @@ app.post('/member', function (req, res) {
   }).catch(err => res.send(err));
 });
 
-addMember(req, member) {
-  member.name = localizePhonetics_DE(member.name);
-  member.userid = req.query.userid;
-  db.querySingle("insert into member set ?", [member]).then(() => findMember(req.query.userid, member.name));
-}
-
 app.delete('/member', function (req, res) {
   db.querySingle("delete r from member_rel r join member m on r.member_a=m.id where m.userid=?",[req.query.userid])
     .then(data => db.querySingle("delete from member where userid=?",[req.query.userid]))
@@ -119,6 +113,12 @@ app.post('/member/:name/rel', function (req, res) {
     });
   }).catch(err => res.send(err));
 });
+
+function addMember(req, member) {
+  member.name = localizePhonetics_DE(member.name);
+  member.userid = req.query.userid;
+  db.querySingle("insert into member set ?", [member]).then(() => findMember(req.query.userid, member.name));
+}
 
 function getRelativesForMember(member, reverse, filter, resolveDict) {
   var aOrB = reverse ? "member_b" : "member_a";
