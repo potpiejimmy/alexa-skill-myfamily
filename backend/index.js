@@ -35,7 +35,7 @@ app.delete('/member', function (req, res) {
 });
 
 app.get('/member/:name', function (req, res) {
-  findMember(req.query.userid, req.params.name).then(member => {
+  findMember(req.query.userid, req.params.name, false, true).then(member => {
     if (!member) {res.send({error:req.params.name}); return;}
     if (req.query.set) {
       return setMemberProperty(member.name, req.query.set, req.query.value)
@@ -69,10 +69,15 @@ app.get('/member/:name/rel', function (req, res) {
 });
 
 app.post('/member/:name/rel', function (req, res) {
+  var added = false;
   findMember(req.query.userid, req.body.member_b).then(memberB => {
     if (!memberB) {res.send({error:req.body.member_b}); return;} // unknown, not allowed
     return findMember(req.query.userid, req.params.name).then(memberA => {
-      if (!memberA && !req.query.inverse) return addMember(req, {name:req.params.name}); else return memberA;  // add A on the fly if not found (only in non-inverse mode)
+      if (!memberA && !req.query.inverse) {
+        // add A on the fly if not found (only in non-inverse mode)
+        added = true;
+        return addMember(req, {name:req.params.name});
+      } else return memberA;
     }).then(memberA => {
       if (!memberA) {res.send({error:req.params.name}); return;} // adding failed or inverse mode, not allowed
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
@@ -88,7 +93,8 @@ app.post('/member/:name/rel', function (req, res) {
                   member_a: memberA.name,
                   member_b: memberB.name,
                   relation: req.body.relation,
-                  error_c:  req.body.member_c
+                  error_c:  req.body.member_c,
+                  added:    added
                 });
               } else {
                 return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
@@ -96,7 +102,8 @@ app.post('/member/:name/rel', function (req, res) {
                     member_a: memberA.name,
                     member_b: memberB.name,
                     member_c: memberC.name,
-                    relation: req.body.relation
+                    relation: req.body.relation,
+                    added:    added
                   });
                 });
               }
@@ -105,7 +112,8 @@ app.post('/member/:name/rel', function (req, res) {
             res.send({
               member_a: memberA.name,
               member_b: memberB.name,
-              relation: req.body.relation
+              relation: req.body.relation,
+              added:    added
             });
           }
         });
@@ -227,17 +235,17 @@ function localizePhonetics_DE(name) {
   return name;
 }
 
-function findMember(userid, name, noFallback) {
+function findMember(userid, name, noFallback, resolveAge) {
   var phoneticName = localizePhonetics_DE(name);
   return db.querySingle("select * from member where userid=? and name sounds like ?", [userid, phoneticName]).then(data => {
     if (data.length === 0) {
       if (noFallback) return null;
       return db.querySingle("select * from member where userid=? and substr(name,1,4) sounds like ?", [userid, phoneticName.substring(0,4)]).then(data => {
         if (data.length === 0) return null;
-        return calcMemberBirthday(data[0]);
+        return resolveAge ? calcMemberBirthday(data[0]) : data[0];
       });
     }
-    return calcMemberBirthday(data[0]);
+    return resolveAge ? calcMemberBirthday(data[0]) : data[0];
   });
 }
 
@@ -254,7 +262,7 @@ function nextBirthday(birthday) {
 }
 
 function calcMemberBirthday(member) {
-  if (!member.birthday || member.birthday.length === 0) return member;
+  if (!member.birthday || member.birthday.length === 0 || member.birthday.indexOf("X")>=0) return member;
   member.birthday_age = ageForBirthday(member.birthday);
   member.birthday_next = nextBirthday(member.birthday);
   return member;
