@@ -90,7 +90,7 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value, {method: 'DELETE'})
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else response.ask("Okay, ich habe " + intent.slots.name.value + " gelöscht", "Was nun?");
+                else response.ask("Okay, ich habe " + body.deleted + " gelöscht", "Was nun?");
             });
     },
     "SetMaleIntent": function (intent, session, response) {
@@ -137,28 +137,20 @@ MyFamily.prototype.intentHandlers = {
     },
     "SetRelationIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
-            .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
-                else {
-                  var answer = body.added ? "Okay, ich habe die Person " + body.member_a + " neu hinzugefügt. " : "Okay, ";
-                  response.askWithCard(answer + body.member_a + " ist " + body.member_b + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + " = " + body.relation);
-                }
+            .then(function(body) { 
+                handleSetRelationResult(body, response)
             });
     },
     "SetRelationExtIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
-                else if (body.error_c) response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation + ". " + body.error_c + " habe ich leider nicht gefunden.", "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.error_c + "(?) = " + body.relation);
-                else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
+                handleSetRelationResult(body, response);
             });
     },
     "SetRelationExtInvIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel?inverse=true", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
             .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Berta hinzuzufügen, sage zum Beispiel: Berta ist Antons Tochter oder die Freundin von Anton ist Berta.", "Was nun?");
-                else if (body.error_c) response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s " + body.relation + ". " + body.error_c + " habe ich leider nicht gefunden.", "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.error_c + "(?) = " + body.relation);
-                else response.askWithCard("Okay, " + body.member_a + " ist " + body.member_b + "s und " + body.member_c + "s " + body.relation, "Was nun?", "Setze Beziehung", body.member_a + " zu " + body.member_b + ","+ body.member_c + " = " + body.relation);
+                handleSetRelationResult(body, response);
             });
     },
     "QueryRelationIntent": function (intent, session, response) {
@@ -229,6 +221,18 @@ function setInitialMemberGender(intent, session, response, gender, genderfull) {
         });
     } else {
         response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session));
+    }
+}
+
+function handleSetRelationResult(body, response) {
+    if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Barbara hinzuzufügen, sage zum Beispiel: Barbara ist Antons Tochter oder die Freundin von Anton ist Barbara.", "Was nun?");
+    else {
+        var answer = body.added ? "Okay, ich habe die Person " + body.member_a + " neu hinzugefügt. " : "Okay, ";
+        answer += body.member_a + " ist " + body.member_b + "s ";
+        if (body.member_c) answer += "und " + body.member_c + "s "
+        answer += body.relation;
+        if (body.error_c) answer += ". " + body.error_c + " habe ich leider nicht gefunden.";
+        response.askWithCard(answer, "Was nun?", "Setze Beziehung", answer);
     }
 }
 

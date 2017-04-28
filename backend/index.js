@@ -52,7 +52,7 @@ app.delete('/member/:name', function (req, res) {
     if (!member) {res.send({error:req.params.name}); return;}
     return db.querySingle("delete from member_rel where member_a=? or member_b=?", [member.id, member.id])
              .then(data => db.querySingle("delete from member where id=?", [member.id]))
-             .then(data => res.send(data));
+             .then(data => res.send({deleted:member.name}));
   }).catch(err => res.send(err));
 });
 
