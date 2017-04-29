@@ -35,7 +35,7 @@ app.delete('/member', function (req, res) {
 });
 
 app.get('/member/:name', function (req, res) {
-  findMember(req.query.userid, req.params.name, false, true).then(member => {
+  findMember(req.query.userid, req.params.name, req.query.noFallback, true).then(member => {
     if (!member) {res.send({error:req.params.name}); return;}
     if (req.query.set) {
       return setMemberProperty(member.name, req.query.set, req.query.value)

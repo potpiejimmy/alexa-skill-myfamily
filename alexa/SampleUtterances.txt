@@ -1,6 +1,11 @@
+ConfirmIntent ja
+ConfirmIntent okay
+CancelIntent nein
+CancelIntent abbruch
 AddInitialMemberIntent {name}
 AddInitialMemberMaleIntent männlich
 AddInitialMemberFemaleIntent weiblich
+AddMemberIntent füge {name} hinzu
 ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 DeleteMembersIntent lösche alle personen
@@ -33,6 +38,14 @@ SetRelationExtIntent {name_a} ist das {relation} von {name_b} und {name_c}
 SetRelationExtInvIntent {name_b} und {name_c} sind {name_a} {relation}
 SetRelationExtInvIntent {name_a} {relation} sind {name_b} und {name_c}
 SetRelationExtInvIntent {name_b} und {name_c} sind die {relation} von {name_a}
+AddSetRelationIntent {name_b} {relation}
+AddSetRelationIntent der {relation} von {name_b}
+AddSetRelationIntent die {relation} von {name_b}
+AddSetRelationIntent das {relation} von {name_b}
+AddSetRelationExtIntent {name_b} und {name_c} {relation}
+AddSetRelationExtIntent der {relation} von {name_b} und {name_c}
+AddSetRelationExtIntent die {relation} von {name_b} und {name_c}
+AddSetRelationExtIntent das {relation} von {name_b} und {name_c}
 QueryRelationIntent wer ist {name} {relation}
 QueryRelationIntent wer sind {name} {relation}
 QueryRelationIntent wer ist der {relation} von {name}

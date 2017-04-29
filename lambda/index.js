@@ -73,7 +73,7 @@ MyFamily.prototype.intentHandlers = {
             });
     },
     "AddMemberIntent": function (intent, session, response) {
-        invokeBackend(session, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: intent.slots.name.value}), headers: {"Content-Type": "application/json"}})
+        invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + "?noFallback=true") // verify existance
             .then(function(body) {
                 if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
                 else response.ask("Okay, ich habe " + intent.slots.name.value + " hinzugefügt", "Was nun?");
