@@ -76,15 +76,18 @@ app.post('/member/:name/rel', function (req, res) {
       if (!memberA && !req.query.inverse) {
         // add A on the fly if not found (only in non-inverse mode)
         added = true;
-        return addMember(req, {name:req.params.name});
+        var newmem = {name:req.params.name};
+        if (req.query.verify) return newmem; // in verify mode, do not actually add
+        return addMember(req, newmem);
       } else return memberA;
     }).then(memberA => {
       if (!memberA) {res.send({error:req.params.name}); return;} // adding failed or inverse mode, not allowed
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];
-        return setMemberRelationsRecurseAll(memberA.id, memberB.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
-          if (reldict.gender) setMemberProperty(memberA.name, "gender", reldict.gender);
+        return (req.query.verify ? Promise.resolve() : setMemberRelationsRecurseAll(memberA.id, memberB.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation))
+        .then(() => {
+          if (reldict.gender && !req.query.verify) setMemberProperty(memberA.name, "gender", reldict.gender);
           if (req.body.member_c) {
             // optional: additonal member C for setting the same relation in one step
             return findMember(req.query.userid, req.body.member_c).then(memberC => {
@@ -97,7 +100,8 @@ app.post('/member/:name/rel', function (req, res) {
                   added:    added
                 });
               } else {
-                return setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation).then(data => {
+                return (req.query.verify ? Promise.resolve() : setMemberRelationsRecurseAll(memberA.id, memberC.id, req.query.inverse ? inverseRel(reldict.relation) : reldict.relation))
+                .then(() => {
                   res.send({
                     member_a: memberA.name,
                     member_b: memberB.name,
