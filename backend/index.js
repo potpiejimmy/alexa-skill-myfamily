@@ -72,16 +72,16 @@ app.post('/member/:name/rel', function (req, res) {
   var added = false;
   findMember(req.query.userid, req.body.member_b).then(memberB => {
     if (!memberB) {res.send({error:req.body.member_b}); return;} // unknown, not allowed
-    return findMember(req.query.userid, req.params.name).then(memberA => {
-      if (!memberA && !req.query.inverse) {
-        // add A on the fly if not found (only in non-inverse mode)
+    return findMember(req.query.userid, req.params.name, req.query.allowAdding).then(memberA => { // no fallback when adding
+      if (!memberA && req.query.allowAdding) {
+        // add A on the fly if not found (and allowed by parameter allowAdding)
         added = true;
         var newmem = {name:req.params.name};
         if (req.query.verify) return newmem; // in verify mode, do not actually add
         return addMember(req, newmem);
       } else return memberA;
     }).then(memberA => {
-      if (!memberA) {res.send({error:req.params.name}); return;} // adding failed or inverse mode, not allowed
+      if (!memberA) {res.send({error:req.params.name}); return;} // adding failed or not allowed
       return db.querySingle("select * from member_rel_dict_de where relname=?", [req.body.relation]).then(rel => {
         if (!rel.length) {res.send({error:req.body.relation}); return;}
         var reldict = rel[0];

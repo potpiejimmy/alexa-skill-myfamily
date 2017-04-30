@@ -52,6 +52,16 @@ MyFamily.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest,
 
 MyFamily.prototype.intentHandlers = {
     // register custom intent handlers
+    "ConfirmIntent": function (intent, session, response) {
+        if (session.attributes.dialogstatus == 'confirmsetrelation')
+            setRelation(intent, session, response);
+        else
+            handleUnexpectedIntent(session, response);
+    },
+    "CancelIntent": function (intent, session, response) {
+        session.attributes.dialogstatus = null;
+        response.tell("Okay, ich habe abgebrochen.");
+    },
     "AddInitialMemberIntent": function (intent, session, response) {
         setInitialMember(intent, session, response);
     },
@@ -75,8 +85,13 @@ MyFamily.prototype.intentHandlers = {
     "AddMemberIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + "?noFallback=true") // verify existance
             .then(function(body) {
-                if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
-                else response.ask("Okay, ich habe " + intent.slots.name.value + " hinzugefügt", "Was nun?");
+                if (body.error) {
+                    // okay, person doesn't exist yet
+                    session.attributes.dialogstatus = 'addmember';
+                    session.attributes.currentmember = intent.slots.name.value;
+                    response.ask("Okay, wer ist " + intent.slots.name.value + "? Sage zum Beispiel: Antons Sohn, oder: Bertas Mutter, oder: die Schwester von Max.", "Was nun?");
+                }
+                else response.ask("Tut mir leid, die Person " + body.name + " existiert bereits.", "Was nun?");
             });
     },
     "DeleteMembersIntent": function (intent, session, response) {
@@ -108,11 +123,17 @@ MyFamily.prototype.intentHandlers = {
             });
     },
     "SetDateOfBirthIntent": function (intent, session, response) {
-        invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.year.value + intent.slots.birthday.value.substr(4))
-            .then(function(body) {
-                if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else response.askWithCard("Okay", "Was nun?", "Setze Geburtsdatum", intent.slots.name.value + " = " + intent.slots.birthday.value);
-            });
+        if (!intent.slots.year || !intent.slots.year.value || intent.slots.year.value.length < 4) {
+            response.tell("Tut mir leid, das Jahr " + (intent.slots.year ? intent.slots.year.value : "") + " ist ungültig");
+        } else if (!intent.slots.birthday || !intent.slots.birthday.value || intent.slots.birthday.value.length != 10) {
+            response.tell("Tut mir leid, das Datum " + (intent.slots.birthday ? intent.slots.birthday.value : "") + " ist ungültig");
+        } else {
+            invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + '?set=birthday&value=' + intent.slots.year.value + intent.slots.birthday.value.substr(4))
+                .then(function(body) {
+                    if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                    else response.askWithCard("Okay, " + body.name + " wurde am " + body.birthday + " geboren.", "Was nun?", "Setze Geburtsdatum", body.name + " = " + body.birthday);
+                });
+        }
     },
     "QueryDateOfBirthIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value)
@@ -136,22 +157,19 @@ MyFamily.prototype.intentHandlers = {
             });
     },
     "SetRelationIntent": function (intent, session, response) {
-        invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
-            .then(function(body) { 
-                handleSetRelationResult(body, response)
-            });
+        setRelation(intent, session, response);
     },
     "SetRelationExtIntent": function (intent, session, response) {
-        invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
-            .then(function(body) {
-                handleSetRelationResult(body, response);
-            });
+        setRelation(intent, session, response);
     },
     "SetRelationExtInvIntent": function (intent, session, response) {
-        invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name_a.value + "/rel?inverse=true", {method: 'POST', body: JSON.stringify({member_b: intent.slots.name_b.value, member_c: intent.slots.name_c.value, relation: intent.slots.relation.value}), headers: {"Content-Type": "application/json"}})
-            .then(function(body) {
-                handleSetRelationResult(body, response);
-            });
+        setRelation(intent, session, response, true);
+    },
+    "AddSetRelationIntent": function (intent, session, response) {
+        setRelationAdding(intent, session, response);
+    },
+    "AddSetRelationExtIntent": function (intent, session, response) {
+        setRelationAdding(intent, session, response);
     },
     "QueryRelationIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value + "/rel?reverse=true&find=" + intent.slots.relation.value)
@@ -190,6 +208,10 @@ MyFamily.prototype.intentHandlers = {
     }
 };
 
+function handleUnexpectedIntent(session, response) {
+    response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session), currentDialogInstructions(session));
+}
+
 function currentDialogInstructions(session) {
     if (session.attributes.dialogstatus == 'addinitial') {
         return "Bitte sage einen Vornamen.";
@@ -204,34 +226,84 @@ function setInitialMember(intent, session, response) {
     if (session.attributes.dialogstatus == 'addinitial') {
         var name = intent.slots.name.value;
         session.attributes.dialogstatus = 'addinitialgender';
-        session.attributes.initialmember = name;
+        session.attributes.currentmember = name;
         response.ask("Hallo " + name + ". Ist " + name + " ein männlicher oder ein weiblicher Vorname?", "Sage männlich oder weiblich");
     } else {
-        response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session));
+        handleUnexpectedIntent(session, response);
     }
 }
 
 function setInitialMemberGender(intent, session, response, gender, genderfull) {
     if (session.attributes.dialogstatus == 'addinitialgender') {
-        var name = session.attributes.initialmember;
+        var name = session.attributes.currentmember;
         session.attributes.dialogstatus = null;
         invokeBackend(session, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender}), headers: {"Content-Type": "application/json"}}).then(body => {
             if (body.error) response.ask("Die Person " + body.error + " existiert bereits.", "Was nun?");
-            else response.ask("Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: David ist " + name + "s Sohn, oder: die Freundin von " + name + " ist Claudia.", "Was nun?");
+            else response.ask("Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");
         });
     } else {
-        response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session));
+        handleUnexpectedIntent(session, response);
     }
 }
 
-function handleSetRelationResult(body, response) {
-    if (body.error) response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person Barbara hinzuzufügen, sage zum Beispiel: Barbara ist Antons Tochter oder die Freundin von Anton ist Barbara.", "Was nun?");
-    else {
-        var answer = body.added ? "Okay, ich habe die Person " + body.member_a + " neu hinzugefügt. " : "Okay, ";
+function setRelationAdding(intent, session, response) {
+    if (session.attributes.dialogstatus == 'addmember') {
+        intent.slots.name_a = {value: session.attributes.currentmember};
+        setRelation(intent, session, response, false, true);
+    } else {
+        handleUnexpectedIntent(session, response);
+    }
+}
+
+function setRelation(intent, session, response, inverse, adding) {
+    var setrel;
+    var confirming = false;
+    if (session.attributes.dialogstatus == 'confirmsetrelation') {
+        session.attributes.dialogstatus = null;
+        setrel = session.attributes.currentsetrel;
+        confirming = true;
+    } else {
+        var memberrel = {
+            member_b: intent.slots.name_b.value,
+            relation: intent.slots.relation.value
+        };
+        if (intent.slots.name_c) member["member_c"] = intent.slots.name_c.value;
+        setrel = {
+            member: intent.slots.name_a.value,
+            memberrel: memberrel,
+            inverse: inverse,
+            adding: adding
+        };
+        session.attributes.dialogstatus = 'confirmsetrelation';
+        session.attributes.currentsetrel = setrel;
+    }
+    var queryParams = "";
+    if (setrel.inverse) queryParams += "?inverse=true";
+    if (setrel.adding) {
+        queryParams += queryParams.length ? "&" : "?";
+        queryParams += "allowAdding=true";
+    }
+    if (!confirming) {
+        queryParams += queryParams.length ? "&" : "?";
+        queryParams += "verify=true";
+    }
+    invokeBackend(session, BACKEND_URL+'/member/' + setrel.member + "/rel" + queryParams, {method: 'POST', body: JSON.stringify(setrel.memberrel), headers: {"Content-Type": "application/json"}})
+        .then(function(body) {
+            handleSetRelationResult(body, session, response, confirming);
+        });
+}
+
+function handleSetRelationResult(body, session, response, confirming) {
+    if (body.error) {
+        session.attributes.dialogstatus = null;
+        response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person hinzuzufügen, sage zum Beispiel: Füge David hinzu.", "Was nun?");
+    } else {
+        var answer = body.added ? "Okay, ich " + (confirming ? "habe" : "werde") + " die Person " + body.member_a + " neu " + (confirming ? "hinzugefügt" : "hinzufügen") + ". " : "Okay, ";
         answer += body.member_a + " ist " + body.member_b + "s ";
         if (body.member_c) answer += "und " + body.member_c + "s "
         answer += body.relation;
-        if (body.error_c) answer += ". " + body.error_c + " habe ich leider nicht gefunden.";
+        if (body.error_c) answer += ". Die dritte Person " + body.error_c + " habe ich leider nicht gefunden";
+        if (!confirming) answer += ". Ist das richtig?";
         response.askWithCard(answer, "Was nun?", "Setze Beziehung", answer);
     }
 }
