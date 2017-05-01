@@ -139,6 +139,7 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else if (!body.birthday) response.tell("Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
                 else response.askWithCard(body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
             });
     },
@@ -146,6 +147,7 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else if (!body.birthday) response.tell("Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
                 else response.askWithCard(body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
             });
     },
@@ -153,6 +155,7 @@ MyFamily.prototype.intentHandlers = {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value)
             .then(function(body) {
                 if (body.error) response.ask("Ich kenne die Person " + body.error + " nicht", "Was nun?");
+                else if (!body.birthday) response.tell("Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
                 else response.askWithCard(body.name + " wird am " + body.birthday_next + " " + (body.birthday_age+1) + " Jahre alt.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
             });
     },
@@ -204,7 +207,10 @@ MyFamily.prototype.intentHandlers = {
         response.tell("Auf Wiedersehen");
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
-        response.ask("Sag hallo.", "Sag hallo.");
+        response.ask(currentDialogInstructions(session), currentDialogInstructions(session));
+    },
+    "AMAZON.StopIntent": function (intent, session, response) {
+        response.tell("Auf Wiedersehen");
     }
 };
 
@@ -267,7 +273,7 @@ function setRelation(intent, session, response, inverse, adding) {
             member_b: intent.slots.name_b.value,
             relation: intent.slots.relation.value
         };
-        if (intent.slots.name_c) member["member_c"] = intent.slots.name_c.value;
+        if (intent.slots.name_c) memberrel.member_c = intent.slots.name_c.value;
         setrel = {
             member: intent.slots.name_a.value,
             memberrel: memberrel,
@@ -298,7 +304,7 @@ function handleSetRelationResult(body, session, response, confirming) {
         session.attributes.dialogstatus = null;
         response.ask("Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person hinzuzufügen, sage zum Beispiel: Füge David hinzu.", "Was nun?");
     } else {
-        var answer = body.added ? "Okay, ich " + (confirming ? "habe" : "werde") + " die Person " + body.member_a + " neu " + (confirming ? "hinzugefügt" : "hinzufügen") + ". " : "Okay, ";
+        var answer = body.added ? "Okay, ich " + (confirming ? "habe " : "werde die Person ") + body.member_a + " neu " + (confirming ? "hinzugefügt" : "hinzufügen") + ". " : "Okay, ";
         answer += body.member_a + " ist " + body.member_b + "s ";
         if (body.member_c) answer += "und " + body.member_c + "s "
         answer += body.relation;
