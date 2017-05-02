@@ -2,6 +2,7 @@ ConfirmIntent ja
 ConfirmIntent okay
 CancelIntent nein
 CancelIntent abbruch
+CancelIntent abbrechen
 AddInitialMemberIntent {name}
 AddInitialMemberMaleIntent männlich
 AddInitialMemberFemaleIntent weiblich
@@ -18,6 +19,7 @@ SetFemaleIntent {name} ist eine Frau
 SetFemaleIntent {name} ist ein Mädchen
 SetDateOfBirthIntent {name} wurde am {birthday} {year} geboren
 SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday} {year}
+SetBirthdayTestIntent {birthday}
 QueryDateOfBirthIntent wann wurde {name} geboren
 QueryDateOfBirthIntent was ist das geburtsdatum von {name}
 QueryAgeIntent wie alt ist {name}

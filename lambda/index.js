@@ -89,7 +89,7 @@ MyFamily.prototype.intentHandlers = {
                     // okay, person doesn't exist yet
                     session.attributes.dialogstatus = 'addmember';
                     session.attributes.currentmember = intent.slots.name.value;
-                    response.ask("Okay, wer ist " + intent.slots.name.value + "? Sage zum Beispiel: Antons Sohn, oder: Bertas Mutter, oder: die Schwester von Max.", "Was nun?");
+                    response.ask("Okay, wer ist " + intent.slots.name.value + "? Sage zum Beispiel: Antons Sohn, oder: die Schwester von Max, oder abbrechen, wenn ich dich falsch verstanden habe.", "Was nun?");
                 }
                 else response.ask("Tut mir leid, die Person " + body.name + " existiert bereits.", "Was nun?");
             });
@@ -134,6 +134,9 @@ MyFamily.prototype.intentHandlers = {
                     else response.askWithCard("Okay, " + body.name + " wurde am " + body.birthday + " geboren.", "Was nun?", "Setze Geburtsdatum", body.name + " = " + body.birthday);
                 });
         }
+    },
+    "SetBirthdayTestIntent": function (intent, session, response) {
+        response.ask("Ich habe verstanden: " + intent.slots.birthday.value);
     },
     "QueryDateOfBirthIntent": function (intent, session, response) {
         invokeBackend(session, BACKEND_URL+'/member/' + intent.slots.name.value)
