@@ -1,7 +1,5 @@
 {
   "intents": [
-    {"intent": "ConfirmIntent"},
-    {"intent": "CancelIntent"},
     {"intent": "AddInitialMemberIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
     {"intent": "AddInitialMemberMaleIntent"},
     {"intent": "AddInitialMemberFemaleIntent"},
@@ -23,8 +21,10 @@
     {"intent": "AddSetRelationExtIntent", "slots": [{"name": "name_b", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "name_c", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "QueryRelationIntent", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}, {"name": "relation", "type": "CUSTOM_FAMILYREL"}]},
     {"intent": "QueryMemberRelations", "slots": [{"name": "name", "type": "AMAZON.DE_FIRST_NAME"}]},
-    {"intent": "QuitIntent"},
     {"intent": "AMAZON.HelpIntent"},
-    {"intent": "AMAZON.StopIntent"}
+    {"intent": "AMAZON.StopIntent"},
+    {"intent": "AMAZON.CancelIntent"},
+    {"intent": "AMAZON.YesIntent"},
+    {"intent": "AMAZON.NoIntent"}
   ]
 }

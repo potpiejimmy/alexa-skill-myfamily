@@ -52,15 +52,17 @@ MyFamily.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest,
 
 MyFamily.prototype.intentHandlers = {
     // register custom intent handlers
-    "ConfirmIntent": function (intent, session, response) {
+    "AMAZON.YesIntent": function (intent, session, response) {
         if (session.attributes.dialogstatus == 'confirmsetrelation')
             setRelation(intent, session, response);
         else
             handleUnexpectedIntent(session, response);
     },
-    "CancelIntent": function (intent, session, response) {
-        session.attributes.dialogstatus = null;
-        response.tell("Okay, ich habe abgebrochen.");
+    "AMAZON.NoIntent": function (intent, session, response) {
+        cancel(session, response);
+    },
+    "AMAZON.CancelIntent": function (intent, session, response) {
+        cancel(session, response);
     },
     "AddInitialMemberIntent": function (intent, session, response) {
         setInitialMember(intent, session, response);
@@ -206,9 +208,6 @@ MyFamily.prototype.intentHandlers = {
                 }
             });
     },
-    "QuitIntent": function (intent, session, response) {
-        response.tell("Auf Wiedersehen");
-    },
     "AMAZON.HelpIntent": function (intent, session, response) {
         response.ask(currentDialogInstructions(session), currentDialogInstructions(session));
     },
@@ -219,6 +218,11 @@ MyFamily.prototype.intentHandlers = {
 
 function handleUnexpectedIntent(session, response) {
     response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session), currentDialogInstructions(session));
+}
+
+function cancel(session, response) {
+    session.attributes.dialogstatus = null;
+    response.tell("Okay, ich habe abgebrochen.");
 }
 
 function currentDialogInstructions(session) {
