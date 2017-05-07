@@ -6,47 +6,35 @@ ListMembersIntent wer ist meine familie
 ListMembersIntent wer gehört zu meiner familie
 DeleteMembersIntent lösche alle personen
 DeleteMemberIntent lösche {name}
-SetMaleIntent {name} ist männlich
-SetMaleIntent {name} ist ein Mann
-SetMaleIntent {name} ist ein Junge
-SetFemaleIntent {name} ist weiblich
-SetFemaleIntent {name} ist eine Frau
-SetFemaleIntent {name} ist ein Mädchen
 SetDateOfBirthIntent {name} wurde am {birthday} {year} geboren
 SetDateOfBirthIntent das geburtsdatum von {name} ist {birthday} {year}
-SetBirthdayTestIntent setze datum {birthday}
 QueryDateOfBirthIntent wann wurde {name} geboren
 QueryDateOfBirthIntent was ist das geburtsdatum von {name}
 QueryAgeIntent wie alt ist {name}
 QueryBirthdayIntent wann hat {name} geburtstag
 QueryBirthdayIntent wie alt wird {name}
 SetRelationIntent {name_a} ist {name_b} {relation}
-SetRelationIntent {name_a} ist der {relation} von {name_b}
-SetRelationIntent {name_a} ist die {relation} von {name_b}
-SetRelationIntent {name_a} ist das {relation} von {name_b}
-SetRelationIntent {name_b} {relation} ist {name_a}
-SetRelationIntent der {relation} von {name_b} ist {name_a}
-SetRelationIntent die {relation} von {name_b} ist {name_a}
-SetRelationIntent das {relation} von {name_b} ist {name_a}
-SetRelationExtIntent {name_a} ist {name_b} und {name_c} {relation}
-SetRelationExtIntent {name_a} ist der {relation} von {name_b} und {name_c}
-SetRelationExtIntent {name_a} ist die {relation} von {name_b} und {name_c}
-SetRelationExtIntent {name_a} ist das {relation} von {name_b} und {name_c}
-SetRelationExtInvIntent {name_b} und {name_c} sind {name_a} {relation}
-SetRelationExtInvIntent {name_a} {relation} sind {name_b} und {name_c}
-SetRelationExtInvIntent {name_b} und {name_c} sind die {relation} von {name_a}
+SetRelationIntent {name_a} ist {relation} von {name_b}
 AddSetRelationIntent {name_b} {relation}
 AddSetRelationIntent der {relation} von {name_b}
 AddSetRelationIntent die {relation} von {name_b}
 AddSetRelationIntent das {relation} von {name_b}
 AddSetRelationExtIntent {name_b} und {name_c} {relation}
-AddSetRelationExtIntent der {relation} von {name_b} und {name_c}
-AddSetRelationExtIntent die {relation} von {name_b} und {name_c}
-AddSetRelationExtIntent das {relation} von {name_b} und {name_c}
+AddSetRelationExtIntent {relation} von {name_b} und {name_c}
 QueryRelationIntent wer ist {name} {relation}
 QueryRelationIntent wer sind {name} {relation}
-QueryRelationIntent wer ist der {relation} von {name}
-QueryRelationIntent wer ist die {relation} von {name}
-QueryRelationIntent wer ist das {relation} von {name}
+QueryRelationIntent wer ist {relation} von {name}
 QueryRelationIntent wer sind die {relation} von {name}
 QueryMemberRelations wer ist {name}
+#SetMaleIntent {name} ist männlich
+#SetMaleIntent {name} ist ein Mann
+#SetMaleIntent {name} ist ein Junge
+#SetFemaleIntent {name} ist weiblich
+#SetFemaleIntent {name} ist eine Frau
+#SetFemaleIntent {name} ist ein Mädchen
+#SetRelationExtIntent {name_a} ist {name_b} und {name_c} {relation}
+#SetRelationExtIntent {name_a} ist {relation} von {name_b} und {name_c}
+#SetRelationExtInvIntent {name_b} und {name_c} sind {name_a} {relation}
+#SetRelationExtInvIntent {name_a} {relation} sind {name_b} und {name_c}
+#SetRelationExtInvIntent {name_b} und {name_c} sind die {relation} von {name_a}
+#SetBirthdayTestIntent setze datum {birthday}

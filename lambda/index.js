@@ -216,6 +216,10 @@ MyFamily.prototype.intentHandlers = {
     }
 };
 
+function debug(intent, session, response) {
+    response.ask(intent.name + ": " + arrayToSpeech(Object.keys(intent.slots), i=>i+": "+intent.slots[i].value));
+}
+
 function handleUnexpectedIntent(session, response) {
     response.ask("Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session), currentDialogInstructions(session));
 }
@@ -276,6 +280,13 @@ function setRelation(intent, session, response, inverse, adding) {
         setrel = session.attributes.currentsetrel;
         confirming = true;
     } else {
+        if (!intent.slots.relation.value ||
+            !intent.slots.name_a.value ||
+            !intent.slots.name_b.value ||
+            (intent.slots.name_c && !intent.slots.name_c.value)) {
+            handleUnexpectedIntent(session,response);
+            return;
+        }
         var memberrel = {
             member_b: intent.slots.name_b.value,
             relation: intent.slots.relation.value
