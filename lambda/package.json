@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/potpiejimmy/alexa-skill-myfamily#readme",
   "dependencies": {
+    "alexa-sdk": "^1.0.9",
     "node-fetch": "^1.6.3"
   }
 }
