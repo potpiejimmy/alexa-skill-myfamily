@@ -1,0 +1,123 @@
+{
+  "intents": [
+    {
+      "name": "AddInitialMemberIntent",
+      "samples": [
+        "familie einrichten"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}",
+            "ich heiße {name}"
+          ]
+        },
+        {
+          "name": "gender",
+          "type": "CUSTOM_GENDER",
+          "samples": [
+            "{gender}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AMAZON.CancelIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.HelpIntent",
+      "samples": []
+    },
+    {
+      "name": "AMAZON.StopIntent",
+      "samples": []
+    }
+  ],
+  "types": [
+    {
+      "name": "CUSTOM_GENDER",
+      "values": [
+        {
+          "name": {
+            "value": "männlich"
+          }
+        },
+        {
+          "name": {
+            "value": "weiblich"
+          }
+        }
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "id": "Confirm.Intent-AddInitialMemberIntent",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Okay, ich werde deine Familie mit der Person {name} einrichten. {name} ist eine {gender}e Person. Ist das richtig?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Verrate mir deinen Vornamen. Wie heißt du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-gender",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Ist das ein männlicher oder ein weiblicher Vorname?"
+        }
+      ]
+    }
+  ],
+  "dialog": {
+    "version": "1.0",
+    "intents": [
+      {
+        "name": "AddInitialMemberIntent",
+        "confirmationRequired": true,
+        "prompts": {
+          "confirm": "Confirm.Intent-AddInitialMemberIntent"
+        },
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-name"
+            }
+          },
+          {
+            "name": "gender",
+            "type": "CUSTOM_GENDER",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-gender"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

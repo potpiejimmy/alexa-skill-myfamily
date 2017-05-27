@@ -2,6 +2,8 @@
 var Alexa = require('alexa-sdk');
 var nodeFetch = require('node-fetch');
  
+var BACKEND_URL = 'http://sample-env.7gnri5qkiv.eu-west-1.elasticbeanstalk.com';
+
 exports.handler = function(event, context, callback){
     var alexa = Alexa.handler(event, context);
     alexa.registerHandlers(handlers);
@@ -10,40 +12,42 @@ exports.handler = function(event, context, callback){
 
 var handlers = {
     "LaunchRequest": function() {
-        invokeBackend(BACKEND_URL+'/member').then(body => {
+        invokeBackend.call(this, BACKEND_URL+'/member').then(body => {
             if (body.length === 0) {
                 this.attributes.dialogstatus = 'addinitial';
-                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. Verrate mir zuerst deinen Vornamen. Wie heißt du?", "Wie heißt du?");
+                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. Sage: Familie einrichten, um zu beginnen", "Sage: Familie einrichten");
             } else {
                 var members = arrayToSpeech(body, m => m.name);
                 this.emit(':askWithCard', "Willkommen. Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
             }
         });
     },
+    "AddInitialMemberIntent": function () {
+        if (this.event.request.dialogState !== 'COMPLETED'){
+            this.emit(':delegate');
+        } else {
+            setInitialMember.call(this);
+        }
+    },
+    /*
     // register custom intent handlers
     "AMAZON.YesIntent": function () {
         if (this.attributes.dialogstatus == 'confirmsetrelation')
-            setRelation();
+            setRelation.call(this);
         else
-            handleUnexpectedIntent();
+            handleUnexpectedIntent.call(this);
     },
     "AMAZON.NoIntent": function () {
-        cancel();
-    },
-    "AMAZON.CancelIntent": function () {
-        cancel();
-    },
-    "AddInitialMemberIntent": function () {
-        setInitialMember();
+        cancel.call(this);
     },
     "AddInitialMemberMaleIntent": function () {
-        setInitialMemberGender('m', 'männliche');
+        setInitialMemberGender.call(this, 'm', 'männliche');
     },
     "AddInitialMemberFemaleIntent": function () {
-        setInitialMemberGender('f', 'weibliche');
+        setInitialMemberGender.call(this, 'f', 'weibliche');
     },
     "ListMembersIntent": function () {
-        invokeBackend(BACKEND_URL+'/member')
+        invokeBackend.call(this, BACKEND_URL+'/member')
             .then(function(body) {
                 if (body.length === 0)
                     this.emit(':ask', "Es sind keine Familienmitglieder vorhanden", "Was nun?");
@@ -54,7 +58,7 @@ var handlers = {
             });
     },
     "AddMemberIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "?noFallback=true") // verify existance
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "?noFallback=true") // verify existance
             .then(function(body) {
                 if (body.error) {
                     // okay, person doesn't exist yet
@@ -66,28 +70,28 @@ var handlers = {
             });
     },
     "DeleteMembersIntent": function () {
-        invokeBackend(BACKEND_URL+'/member', {method: 'DELETE'})
+        invokeBackend.call(this, BACKEND_URL+'/member', {method: 'DELETE'})
             .then(function(body) {
                 this.attributes.dialogstatus = 'addinitial';
                 this.emit(':ask', "Okay, ich habe alle Personen gelöscht. Beginnen wir von vorne. Wie heißt du?", "Wie heißt du?");
             });
     },
     "DeleteMemberIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else this.emit(':ask', "Okay, ich habe " + body.deleted + " gelöscht", "Was nun?");
             });
     },
     "SetMaleIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=m')
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=m')
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else this.emit(':ask', "Okay", "Was nun?");
             });
     },
     "SetFemaleIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=f')
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=f')
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else this.emit(':ask', "Okay", "Was nun?");
@@ -99,7 +103,7 @@ var handlers = {
         } else if (!this.event.request.intent.slots.birthday || !this.event.request.intent.slots.birthday.value || this.event.request.intent.slots.birthday.value.length != 10) {
             this.emit(':tell', "Tut mir leid, das Datum " + (this.event.request.intent.slots.birthday ? this.event.request.intent.slots.birthday.value : "") + " ist ungültig");
         } else {
-            invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=birthday&value=' + this.event.request.intent.slots.year.value + this.event.request.intent.slots.birthday.value.substr(4))
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=birthday&value=' + this.event.request.intent.slots.year.value + this.event.request.intent.slots.birthday.value.substr(4))
                 .then(function(body) {
                     if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                     else this.emit(':askWithCard', "Okay, " + body.name + " wurde am " + body.birthday + " geboren.", "Was nun?", "Setze Geburtsdatum", body.name + " = " + body.birthday);
@@ -110,7 +114,7 @@ var handlers = {
         this.emit(':ask', "Ich habe verstanden: " + this.event.request.intent.slots.birthday.value);
     },
     "QueryDateOfBirthIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
@@ -118,7 +122,7 @@ var handlers = {
             });
     },
     "QueryAgeIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
@@ -126,7 +130,7 @@ var handlers = {
             });
     },
     "QueryBirthdayIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
                 else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
@@ -134,22 +138,22 @@ var handlers = {
             });
     },
     "SetRelationIntent": function () {
-        setRelation();
+        setRelation.call(this);
     },
     "SetRelationExtIntent": function () {
-        setRelation();
+        setRelation.call(this);
     },
     "SetRelationExtInvIntent": function () {
-        setRelation(true);
+        setRelation.call(this, true);
     },
     "AddSetRelationIntent": function () {
-        setRelationAdding();
+        setRelationAdding.call(this);
     },
     "AddSetRelationExtIntent": function () {
-        setRelationAdding();
+        setRelationAdding.call(this);
     },
     "QueryRelationIntent": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
             .then(function(body) {
                 if (body.error) this.emit(':ask', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
                 else {
@@ -161,11 +165,11 @@ var handlers = {
             });
     },
     "QueryMemberRelations": function () {
-        invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
             .then(function(member) {
                 if (member.error) this.emit(':ask', "Ich kenne die Person " + member.error + " nicht", "Was nun?");
                 else {
-                    invokeBackend(BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
+                    invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
                         if (rels.length === 0) this.emit(':ask', "Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage " + member.name + " ist männlich oder " + member.name + " ist weiblich.", "Was nun?");
                         else {
                             var relmap = groupBy(rels, r => r.relname);
@@ -176,9 +180,12 @@ var handlers = {
                     });
                 }
             });
+    }, */
+    "AMAZON.CancelIntent": function () {
+        cancel.call(this);
     },
     "AMAZON.HelpIntent": function () {
-        this.emit(':ask', currentDialogInstructions(session), currentDialogInstructions(session));
+        this.emit(':ask', currentDialogInstructions(), currentDialogInstructions());
     },
     "AMAZON.StopIntent": function () {
         this.emit(':tell', "Auf Wiedersehen");
@@ -190,7 +197,7 @@ function debug() {
 }
 
 function handleUnexpectedIntent() {
-    this.emit(':ask', "Ich habe dich leider nicht verstanden. " + currentDialogInstructions(session), currentDialogInstructions(session));
+    this.emit(':ask', "Ich habe dich leider nicht verstanden. " + currentDialogInstructions(), currentDialogInstructions());
 }
 
 function cancel() {
@@ -327,7 +334,7 @@ function arrayToSpeech(elements, appender) {
 
 function invokeBackend(url, options) {
     url += url.indexOf("?")>=0 ? "&" : "?";
-    url += "userid=" + session.user.userId;
+    url += "userid=" + this.event.session.user.userId;
     return nodeFetch(url, options)
         .then(function(res) {
             return res.json();
