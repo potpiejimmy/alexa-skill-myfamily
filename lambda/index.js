@@ -15,7 +15,7 @@ var handlers = {
         invokeBackend.call(this, BACKEND_URL+'/member').then(body => {
             if (body.length === 0) {
                 this.attributes.dialogstatus = 'ADDINITIAL';
-                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. " + currentDialogInstructions(), currentDialogInstructions());
+                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. " + currentDialogInstructions.call(this), currentDialogInstructions.call(this));
             } else {
                 var members = arrayToSpeech(body, m => m.name);
                 this.emit(':askWithCard', "Willkommen. Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
@@ -24,33 +24,39 @@ var handlers = {
     },
     "AddInitialMemberIntent": function () {
         if (this.attributes.dialogstatus !== 'ADDINITIAL') {
-            handleUnexpectedIntent();
-        } else if (this.event.request.dialogState !== 'COMPLETED'){
-            this.emit(':delegate');
+            handleUnexpectedIntent.call(this);
+        } else if (this.event.request.dialogState !== 'COMPLETED') {
+            var intent = this.event.request.intent;
+            if (intent.slots.gender.value) {
+                // check value of gender: only allow männlich or weiblich
+                if (intent.slots.gender.value !== 'weiblich') intent.slots.gender.value = 'männlich';
+                this.emit(':delegate', intent); // update intent
+            }
+            else {
+                this.emit(':delegate');
+            }
         } else {
-            setInitialMember.call(this);
+            if (handleIntentConfirmation.call(this)) {
+                setInitialMember.call(this);
+            }
         }
     },
-    /*
-    // register custom intent handlers
-    "AMAZON.YesIntent": function () {
-        if (this.attributes.dialogstatus == 'confirmsetrelation')
-            setRelation.call(this);
-        else
-            handleUnexpectedIntent.call(this);
-    },
-    "AMAZON.NoIntent": function () {
-        cancel.call(this);
-    },
-    "AddInitialMemberMaleIntent": function () {
-        setInitialMemberGender.call(this, 'm', 'männliche');
-    },
-    "AddInitialMemberFemaleIntent": function () {
-        setInitialMemberGender.call(this, 'f', 'weibliche');
+    "DeleteMembersIntent": function () {
+        if (this.event.request.intent.confirmationStatus === 'NONE') {
+            this.emit(':confirmIntent', 'Soll ich wirklich alle Personen löschen?', 'Sag ja oder nein');
+        } else {
+            if (handleIntentConfirmation.call(this)) {
+                invokeBackend.call(this, BACKEND_URL+'/member', {method: 'DELETE'})
+                    .then(body => {
+                        this.attributes.dialogstatus = 'ADDINITIAL';
+                        this.emit(':ask', "Okay, ich habe alle Personen gelöscht. " + currentDialogInstructions.call(this), currentDialogInstructions.call(this));
+                    });
+            }
+        }
     },
     "ListMembersIntent": function () {
         invokeBackend.call(this, BACKEND_URL+'/member')
-            .then(function(body) {
+            .then(body => {
                 if (body.length === 0)
                     this.emit(':ask', "Es sind keine Familienmitglieder vorhanden", "Was nun?");
                 else {
@@ -59,6 +65,7 @@ var handlers = {
                 }
             });
     },
+    /*
     "AddMemberIntent": function () {
         invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "?noFallback=true") // verify existance
             .then(function(body) {
@@ -69,13 +76,6 @@ var handlers = {
                     this.emit(':ask', "Okay, wer ist " + this.event.request.intent.slots.name.value + "? Sage zum Beispiel: Antons Sohn, oder: die Schwester von Max, oder abbrechen, wenn ich dich falsch verstanden habe.", "Was nun?");
                 }
                 else this.emit(':ask', "Tut mir leid, die Person " + body.name + " existiert bereits.", "Was nun?");
-            });
-    },
-    "DeleteMembersIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member', {method: 'DELETE'})
-            .then(function(body) {
-                this.attributes.dialogstatus = 'addinitial';
-                this.emit(':ask', "Okay, ich habe alle Personen gelöscht. Beginnen wir von vorne. Wie heißt du?", "Wie heißt du?");
             });
     },
     "DeleteMemberIntent": function () {
@@ -187,7 +187,7 @@ var handlers = {
         cancel.call(this);
     },
     "AMAZON.HelpIntent": function () {
-        this.emit(':ask', currentDialogInstructions(), currentDialogInstructions());
+        this.emit(':ask', currentDialogInstructions.call(this), currentDialogInstructions.call(this));
     },
     "AMAZON.StopIntent": function () {
         this.emit(':tell', "Auf Wiedersehen");
@@ -199,11 +199,10 @@ function debug() {
 }
 
 function handleUnexpectedIntent() {
-    this.emit(':ask', "Ich habe dich leider nicht verstanden. " + currentDialogInstructions(), currentDialogInstructions());
+    this.emit(':ask', "Ich habe dich leider nicht verstanden. " + currentDialogInstructions.call(this), currentDialogInstructions.call(this));
 }
 
 function cancel() {
-    this.attributes.dialogstatus = null;
     this.emit(':tell', "Okay, ich habe abgebrochen.");
 }
 
@@ -215,13 +214,22 @@ function currentDialogInstructions() {
     }
 }
 
+function handleIntentConfirmation() {
+    if (this.event.request.intent.confirmationStatus !== 'CONFIRMED') {
+        cancel.call(this);
+        return false;
+    }
+//    this.emit(':ask', this.event.request.intent.confirmationStatus, this.event.request.intent.confirmationStatus);
+    return true;
+}
+
 function setInitialMember() {
     var name = this.event.request.intent.slots.name.value;
-    var gender = this.event.request.intent.slots.gender.value; // XXX TODO check value
+    var gender = this.event.request.intent.slots.gender.value;
     this.attributes.dialogstatus = null;
-    invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender.substr(0,1)}), headers: {"Content-Type": "application/json"}}).then(body => {
+    invokeBackend.call(this, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender.substr(0,1)}), headers: {"Content-Type": "application/json"}}).then(body => {
         if (body.error) this.emit(':ask', "Die Person " + body.error + " existiert bereits.", "Was nun?");
-        else this.emit(':ask', "Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");
+        else this.emit(':ask', "Okay, ich habe die " + gender + "e Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");
     });
 }
 

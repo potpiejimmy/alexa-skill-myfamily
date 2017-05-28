@@ -34,6 +34,21 @@
     {
       "name": "AMAZON.StopIntent",
       "samples": []
+    },
+    {
+      "name": "DeleteMembersIntent",
+      "samples": [
+        "lösche alle personen"
+      ],
+      "slots": []
+    },
+    {
+      "name": "ListMembersIntent",
+      "samples": [
+        "wer ist meine familie",
+        "wer gehört zu meiner familie"
+      ],
+      "slots": []
     }
   ],
   "types": [
@@ -83,7 +98,7 @@
       "variations": [
         {
           "type": "PlainText",
-          "value": "Ist das ein männlicher oder ein weiblicher Vorname?"
+          "value": "Ist {name} ein männlicher oder ein weiblicher Vorname?"
         }
       ]
     }
@@ -117,6 +132,18 @@
             }
           }
         ]
+      },
+      {
+        "name": "DeleteMembersIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": []
+      },
+      {
+        "name": "ListMembersIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": []
       }
     ]
   }
