@@ -14,8 +14,8 @@ var handlers = {
     "LaunchRequest": function() {
         invokeBackend.call(this, BACKEND_URL+'/member').then(body => {
             if (body.length === 0) {
-                this.attributes.dialogstatus = 'addinitial';
-                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. Sage: Familie einrichten, um zu beginnen", "Sage: Familie einrichten");
+                this.attributes.dialogstatus = 'ADDINITIAL';
+                this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. " + currentDialogInstructions(), currentDialogInstructions());
             } else {
                 var members = arrayToSpeech(body, m => m.name);
                 this.emit(':askWithCard', "Willkommen. Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
@@ -23,7 +23,9 @@ var handlers = {
         });
     },
     "AddInitialMemberIntent": function () {
-        if (this.event.request.dialogState !== 'COMPLETED'){
+        if (this.attributes.dialogstatus !== 'ADDINITIAL') {
+            handleUnexpectedIntent();
+        } else if (this.event.request.dialogState !== 'COMPLETED'){
             this.emit(':delegate');
         } else {
             setInitialMember.call(this);
@@ -206,37 +208,21 @@ function cancel() {
 }
 
 function currentDialogInstructions() {
-    if (this.attributes.dialogstatus == 'addinitial') {
-        return "Bitte sage einen Vornamen.";
-    } else if (this.attributes.dialogstatus == 'addinitialgender') {
-        return "Sage männlich oder weiblich.";
+    if (this.attributes.dialogstatus == 'ADDINITIAL') {
+        return "Sage: Familie einrichten, um zu beginnen.";
     } else {
         return "Sage zum Beispiel: wer ist Max, oder: wie alt ist David.";
     }
 }
 
 function setInitialMember() {
-    if (this.attributes.dialogstatus == 'addinitial') {
-        var name = this.event.request.intent.slots.name.value;
-        this.attributes.dialogstatus = 'addinitialgender';
-        this.attributes.currentmember = name;
-        this.emit(':ask', "Hallo " + name + ". Ist " + name + " ein männlicher oder ein weiblicher Vorname?", "Sage männlich oder weiblich");
-    } else {
-        handleUnexpectedIntent();
-    }
-}
-
-function setInitialMemberGender(gender, genderfull) {
-    if (this.attributes.dialogstatus == 'addinitialgender') {
-        var name = this.attributes.currentmember;
-        this.attributes.dialogstatus = null;
-        invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender}), headers: {"Content-Type": "application/json"}}).then(body => {
-            if (body.error) this.emit(':ask', "Die Person " + body.error + " existiert bereits.", "Was nun?");
-            else this.emit(':ask', "Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");
-        });
-    } else {
-        handleUnexpectedIntent();
-    }
+    var name = this.event.request.intent.slots.name.value;
+    var gender = this.event.request.intent.slots.gender.value; // XXX TODO check value
+    this.attributes.dialogstatus = null;
+    invokeBackend(BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender.substr(0,1)}), headers: {"Content-Type": "application/json"}}).then(body => {
+        if (body.error) this.emit(':ask', "Die Person " + body.error + " existiert bereits.", "Was nun?");
+        else this.emit(':ask', "Okay, ich habe die " + genderfull + " Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");
+    });
 }
 
 function setRelationAdding() {
