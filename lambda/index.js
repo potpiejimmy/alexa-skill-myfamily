@@ -36,7 +36,7 @@ var handlers = {
                 this.emit(':delegate');
             }
         } else {
-            if (handleIntentConfirmation.call(this)) {
+            if (assertIntentConfirmed.call(this)) {
                 setInitialMember.call(this);
             }
         }
@@ -45,7 +45,7 @@ var handlers = {
         if (this.event.request.intent.confirmationStatus === 'NONE') {
             this.emit(':confirmIntent', 'Soll ich wirklich alle Personen löschen?', 'Sag ja oder nein');
         } else {
-            if (handleIntentConfirmation.call(this)) {
+            if (assertIntentConfirmed.call(this)) {
                 invokeBackend.call(this, BACKEND_URL+'/member', {method: 'DELETE'})
                     .then(body => {
                         this.attributes.dialogstatus = 'ADDINITIAL';
@@ -65,19 +65,28 @@ var handlers = {
                 }
             });
     },
-    /*
     "AddMemberIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "?noFallback=true") // verify existance
-            .then(function(body) {
-                if (body.error) {
-                    // okay, person doesn't exist yet
-                    this.attributes.dialogstatus = 'addmember';
-                    this.attributes.currentmember = this.event.request.intent.slots.name.value;
-                    this.emit(':ask', "Okay, wer ist " + this.event.request.intent.slots.name.value + "? Sage zum Beispiel: Antons Sohn, oder: die Schwester von Max, oder abbrechen, wenn ich dich falsch verstanden habe.", "Was nun?");
-                }
-                else this.emit(':ask', "Tut mir leid, die Person " + body.name + " existiert bereits.", "Was nun?");
-            });
+        if (this.attributes.dialogstatus === 'ADDINITIAL') {
+            handleUnexpectedIntent.call(this);
+        } else if (this.event.request.dialogState !== 'COMPLETED') {
+            var intent = this.event.request.intent;
+            if (!intent.slots.name_a.value) {
+                this.emit(':elicitSlot', 'name_a', 'Wie heißt die Person, die du hinzufügen möchtest?', 'Wie heißt die Person, die du hinzufügen möchtest?');
+            } else if (!intent.slots.name_b.value) { // name_a set
+                // verify existance and abort if the name already exists
+                invokeBackend.call(this, BACKEND_URL+'/member/' + intent.slots.name_a.value + "?noFallback=true")
+                    .then(body => {
+                        if (body.error) this.emit(':elicitSlot', 'name_b', "Wer ist " + intent.slots.name_a.value + "? Sage zum Beispiel: Daniels Freund, oder: der Bruder von Hans, oder: Annes und Bobs Tochter.", 'Wer ist '+intent.slots.name_a.value); // okay, person doesn't exist yet, go on
+                        else this.emit(':tell', "Tut mir leid, die Person " + body.name + " existiert bereits.");
+                    });
+            } else {
+                this.emit(':delegate'); // go on
+            }
+        } else {
+            setRelationAdding.call(this);
+        }
     },
+    /*
     "DeleteMemberIntent": function () {
         invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
             .then(function(body) {
@@ -148,12 +157,6 @@ var handlers = {
     "SetRelationExtInvIntent": function () {
         setRelation.call(this, true);
     },
-    "AddSetRelationIntent": function () {
-        setRelationAdding.call(this);
-    },
-    "AddSetRelationExtIntent": function () {
-        setRelationAdding.call(this);
-    },
     "QueryRelationIntent": function () {
         invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
             .then(function(body) {
@@ -214,7 +217,7 @@ function currentDialogInstructions() {
     }
 }
 
-function handleIntentConfirmation() {
+function assertIntentConfirmed() {
     if (this.event.request.intent.confirmationStatus !== 'CONFIRMED') {
         cancel.call(this);
         return false;
@@ -234,46 +237,26 @@ function setInitialMember() {
 }
 
 function setRelationAdding() {
-    if (this.attributes.dialogstatus == 'addmember') {
-        this.event.request.intent.slots.name_a = {value: this.attributes.currentmember};
-        setRelation(false, true);
-    } else {
-        handleUnexpectedIntent();
-    }
+    setRelation.call(this, false, true);
 }
 
 function setRelation(inverse, adding) {
-    var setrel;
+    var memberrel = {
+        member_a: this.event.request.intent.slots.name_a.value,
+        member_b: this.event.request.intent.slots.name_b.value,
+        member_c: this.event.request.intent.slots.name_c.value,
+        relation: this.event.request.intent.slots.relation.value
+    };
     var confirming = false;
-    if (this.attributes.dialogstatus == 'confirmsetrelation') {
-        this.attributes.dialogstatus = null;
-        setrel = this.attributes.currentsetrel;
+    if (this.event.request.intent.confirmationStatus === 'CONFIRMED') {
         confirming = true;
-    } else {
-        if (!this.event.request.intent.slots.relation.value ||
-            !this.event.request.intent.slots.name_a.value ||
-            !this.event.request.intent.slots.name_b.value ||
-            (this.event.request.intent.slots.name_c && !this.event.request.intent.slots.name_c.value)) {
-            handleUnexpectedIntent();
-            return;
-        }
-        var memberrel = {
-            member_b: this.event.request.intent.slots.name_b.value,
-            relation: this.event.request.intent.slots.relation.value
-        };
-        if (this.event.request.intent.slots.name_c) memberrel.member_c = this.event.request.intent.slots.name_c.value;
-        setrel = {
-            member: this.event.request.intent.slots.name_a.value,
-            memberrel: memberrel,
-            inverse: inverse,
-            adding: adding
-        };
-        this.attributes.dialogstatus = 'confirmsetrelation';
-        this.attributes.currentsetrel = setrel;
+    } else if (this.event.request.intent.confirmationStatus === 'DENIED') {
+        cancel.call(this);
+        return;
     }
     var queryParams = "";
-    if (setrel.inverse) queryParams += "?inverse=true";
-    if (setrel.adding) {
+    if (inverse) queryParams += "?inverse=true";
+    if (adding) {
         queryParams += queryParams.length ? "&" : "?";
         queryParams += "allowAdding=true";
     }
@@ -281,16 +264,15 @@ function setRelation(inverse, adding) {
         queryParams += queryParams.length ? "&" : "?";
         queryParams += "verify=true";
     }
-    invokeBackend(BACKEND_URL+'/member/' + setrel.member + "/rel" + queryParams, {method: 'POST', body: JSON.stringify(setrel.memberrel), headers: {"Content-Type": "application/json"}})
-        .then(function(body) {
-            handleSetRelationResult(body, confirming);
+    invokeBackend.call(this, BACKEND_URL+'/member/' + memberrel.member_a + "/rel" + queryParams, {method: 'POST', body: JSON.stringify(memberrel), headers: {"Content-Type": "application/json"}})
+        .then(body => {
+            handleSetRelationResult.call(this, body, confirming);
         });
 }
 
 function handleSetRelationResult(body, confirming) {
     if (body.error) {
-        this.attributes.dialogstatus = null;
-        this.emit(':ask', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Um eine neue Person hinzuzufügen, sage zum Beispiel: Füge David hinzu.", "Was nun?");
+        this.emit(':tell', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht. Bitte versuche es erneut.");
     } else {
         var answer = body.added ? "Okay, ich " + (confirming ? "habe " : "werde die Person ") + body.member_a + " neu " + (confirming ? "hinzugefügt" : "hinzufügen") + ". " : "Okay, ";
         answer += body.member_a + " ist " + body.member_b + "s ";
@@ -298,7 +280,8 @@ function handleSetRelationResult(body, confirming) {
         answer += body.relation;
         if (body.error_c) answer += ". Die dritte Person " + body.error_c + " habe ich leider nicht gefunden";
         if (!confirming) answer += ". Ist das richtig?";
-        this.emit(':askWithCard', answer, "Was nun?", "Setze Beziehung", answer);
+        if (confirming) this.emit(':tellWithCard', answer, "Setze Beziehung", answer);
+        else this.emit(':confirmIntent', answer, answer);
     }
 }
 

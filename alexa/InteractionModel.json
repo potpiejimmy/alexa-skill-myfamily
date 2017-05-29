@@ -24,6 +24,44 @@
       ]
     },
     {
+      "name": "AddMemberIntent",
+      "samples": [
+        "füge {name_a} hinzu",
+        "person hinzufügen"
+      ],
+      "slots": [
+        {
+          "name": "name_a",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name_a}"
+          ]
+        },
+        {
+          "name": "name_b",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name_b} {relation}",
+            "{relation} von {name_b}",
+            "{name_b} und {name_c} {relation}",
+            "{relation} von {name_b} und {name_c}"
+          ]
+        },
+        {
+          "name": "relation",
+          "type": "CUSTOM_FAMILYREL",
+          "samples": [
+            "{relation}"
+          ]
+        },
+        {
+          "name": "name_c",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": []
+        }
+      ]
+    },
+    {
       "name": "AMAZON.CancelIntent",
       "samples": []
     },
@@ -52,6 +90,251 @@
     }
   ],
   "types": [
+    {
+      "name": "CUSTOM_FAMILYREL",
+      "values": [
+        {
+          "name": {
+            "value": "kind"
+          }
+        },
+        {
+          "name": {
+            "value": "kinder"
+          }
+        },
+        {
+          "name": {
+            "value": "sohn"
+          }
+        },
+        {
+          "name": {
+            "value": "söhne"
+          }
+        },
+        {
+          "name": {
+            "value": "tochter"
+          }
+        },
+        {
+          "name": {
+            "value": "töchter"
+          }
+        },
+        {
+          "name": {
+            "value": "eltern"
+          }
+        },
+        {
+          "name": {
+            "value": "vater"
+          }
+        },
+        {
+          "name": {
+            "value": "mutter"
+          }
+        },
+        {
+          "name": {
+            "value": "geschwister"
+          }
+        },
+        {
+          "name": {
+            "value": "bruder"
+          }
+        },
+        {
+          "name": {
+            "value": "brüder"
+          }
+        },
+        {
+          "name": {
+            "value": "schwester"
+          }
+        },
+        {
+          "name": {
+            "value": "schwestern"
+          }
+        },
+        {
+          "name": {
+            "value": "freund"
+          }
+        },
+        {
+          "name": {
+            "value": "freundin"
+          }
+        },
+        {
+          "name": {
+            "value": "mann"
+          }
+        },
+        {
+          "name": {
+            "value": "frau"
+          }
+        },
+        {
+          "name": {
+            "value": "ehemann"
+          }
+        },
+        {
+          "name": {
+            "value": "ehefrau"
+          }
+        },
+        {
+          "name": {
+            "value": "onkel"
+          }
+        },
+        {
+          "name": {
+            "value": "onkels"
+          }
+        },
+        {
+          "name": {
+            "value": "tante"
+          }
+        },
+        {
+          "name": {
+            "value": "tanten"
+          }
+        },
+        {
+          "name": {
+            "value": "neffe"
+          }
+        },
+        {
+          "name": {
+            "value": "neffen"
+          }
+        },
+        {
+          "name": {
+            "value": "nichte"
+          }
+        },
+        {
+          "name": {
+            "value": "nichten"
+          }
+        },
+        {
+          "name": {
+            "value": "cousin"
+          }
+        },
+        {
+          "name": {
+            "value": "vetter"
+          }
+        },
+        {
+          "name": {
+            "value": "cousins"
+          }
+        },
+        {
+          "name": {
+            "value": "vettern"
+          }
+        },
+        {
+          "name": {
+            "value": "cousine"
+          }
+        },
+        {
+          "name": {
+            "value": "base"
+          }
+        },
+        {
+          "name": {
+            "value": "cousinen"
+          }
+        },
+        {
+          "name": {
+            "value": "basen"
+          }
+        },
+        {
+          "name": {
+            "value": "großeltern"
+          }
+        },
+        {
+          "name": {
+            "value": "opa"
+          }
+        },
+        {
+          "name": {
+            "value": "opas"
+          }
+        },
+        {
+          "name": {
+            "value": "großvater"
+          }
+        },
+        {
+          "name": {
+            "value": "großväter"
+          }
+        },
+        {
+          "name": {
+            "value": "oma"
+          }
+        },
+        {
+          "name": {
+            "value": "omas"
+          }
+        },
+        {
+          "name": {
+            "value": "großmutter"
+          }
+        },
+        {
+          "name": {
+            "value": "großmütter"
+          }
+        },
+        {
+          "name": {
+            "value": "enkel"
+          }
+        },
+        {
+          "name": {
+            "value": "enkelin"
+          }
+        },
+        {
+          "name": {
+            "value": "enkelinnen"
+          }
+        }
+      ]
+    },
     {
       "name": "CUSTOM_GENDER",
       "values": [
@@ -101,6 +384,39 @@
           "value": "Ist {name} ein männlicher oder ein weiblicher Vorname?"
         }
       ]
+    },
+    {
+      "id": "Elicit.Intent-AddMemberIntent.IntentSlot-name_a",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Wie heißt die Person, die du hinzufügen möchtest?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-AddMemberIntent.IntentSlot-name_b",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund oder der Bruder von Hans oder Annes und Bobs Tochter."
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-AddMemberIntent.IntentSlot-relation",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante?"
+        }
+      ]
     }
   ],
   "dialog": {
@@ -130,6 +446,47 @@
             "prompts": {
               "elicit": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-gender"
             }
+          }
+        ]
+      },
+      {
+        "name": "AddMemberIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name_a",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-AddMemberIntent.IntentSlot-name_a"
+            }
+          },
+          {
+            "name": "name_b",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-AddMemberIntent.IntentSlot-name_b"
+            }
+          },
+          {
+            "name": "relation",
+            "type": "CUSTOM_FAMILYREL",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-AddMemberIntent.IntentSlot-relation"
+            }
+          },
+          {
+            "name": "name_c",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": false,
+            "confirmationRequired": false,
+            "prompts": {}
           }
         ]
       },
