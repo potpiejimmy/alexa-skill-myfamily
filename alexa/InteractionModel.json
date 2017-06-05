@@ -27,7 +27,8 @@
       "name": "AddMemberIntent",
       "samples": [
         "füge {name_a} hinzu",
-        "person hinzufügen"
+        "person hinzufügen",
+        "füge {name_b} {relation} hinzu"
       ],
       "slots": [
         {
@@ -353,17 +354,6 @@
   ],
   "prompts": [
     {
-      "id": "Confirm.Intent-AddInitialMemberIntent",
-      "promptVersion": "1.0",
-      "definitionVersion": "1.0",
-      "variations": [
-        {
-          "type": "PlainText",
-          "value": "Okay, ich werde deine Familie mit der Person {name} einrichten. {name} ist eine {gender}e Person. Ist das richtig?"
-        }
-      ]
-    },
-    {
       "id": "Elicit.Intent-AddInitialMemberIntent.IntentSlot-name",
       "promptVersion": "1.0",
       "definitionVersion": "1.0",
@@ -424,10 +414,8 @@
     "intents": [
       {
         "name": "AddInitialMemberIntent",
-        "confirmationRequired": true,
-        "prompts": {
-          "confirm": "Confirm.Intent-AddInitialMemberIntent"
-        },
+        "confirmationRequired": false,
+        "prompts": {},
         "slots": [
           {
             "name": "name",

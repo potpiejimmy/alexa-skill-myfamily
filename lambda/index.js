@@ -36,8 +36,12 @@ var handlers = {
                 this.emit(':delegate');
             }
         } else {
-            if (assertIntentConfirmed.call(this)) {
-                setInitialMember.call(this);
+            if (this.event.request.intent.confirmationStatus === 'NONE') {
+                this.emit(':confirmIntent', "Okay, ich werde deine Familie mit der Person {name} einrichten. "+this.event.request.intent.slots.name.value+" ist eine "+this.event.request.intent.slots.gender.value+"e Person. Ist das richtig?", 'Sag ja oder nein');
+            } else {
+                if (assertIntentConfirmed.call(this)) {
+                    setInitialMember.call(this);
+                }
             }
         }
     },
@@ -70,13 +74,11 @@ var handlers = {
             handleUnexpectedIntent.call(this);
         } else if (this.event.request.dialogState !== 'COMPLETED') {
             var intent = this.event.request.intent;
-            if (!intent.slots.name_a.value) {
-                this.emit(':elicitSlot', 'name_a', 'Wie heißt die Person, die du hinzufügen möchtest?', 'Wie heißt die Person, die du hinzufügen möchtest?');
-            } else if (!intent.slots.name_b.value) { // name_a set
+            if (intent.slots.name_a.value) { // name_a set
                 // verify existance and abort if the name already exists
                 invokeBackend.call(this, BACKEND_URL+'/member/' + intent.slots.name_a.value + "?noFallback=true")
                     .then(body => {
-                        if (body.error) this.emit(':elicitSlot', 'name_b', "Wer ist " + intent.slots.name_a.value + "? Sage zum Beispiel: Daniels Freund, oder: der Bruder von Hans, oder: Annes und Bobs Tochter.", 'Wer ist '+intent.slots.name_a.value); // okay, person doesn't exist yet, go on
+                        if (body.error) this.emit(':delegate'); // go on
                         else this.emit(':tell', "Tut mir leid, die Person " + body.name + " existiert bereits.");
                     });
             } else {
@@ -222,7 +224,6 @@ function assertIntentConfirmed() {
         cancel.call(this);
         return false;
     }
-//    this.emit(':ask', this.event.request.intent.confirmationStatus, this.event.request.intent.confirmationStatus);
     return true;
 }
 
@@ -313,9 +314,8 @@ function invokeBackend(url, options) {
     url += url.indexOf("?")>=0 ? "&" : "?";
     url += "userid=" + this.event.session.user.userId;
     return nodeFetch(url, options)
-        .then(function(res) {
-            return res.json();
-        }).catch(function(err) {
+        .then(res => res.json())
+        .catch(err => {
             this.emit(':tellWithCard', "Fehler", "Weltraum-Fehler", "" + JSON.stringify(err));
         });
 }
