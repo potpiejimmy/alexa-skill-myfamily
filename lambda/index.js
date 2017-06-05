@@ -62,7 +62,7 @@ var handlers = {
         invokeBackend.call(this, BACKEND_URL+'/member')
             .then(body => {
                 if (body.length === 0)
-                    this.emit(':ask', "Es sind keine Familienmitglieder vorhanden", "Was nun?");
+                    this.emit(':tell', "Es sind keine Familienmitglieder vorhanden");
                 else {
                     var members = arrayToSpeech(body, m => m.name);
                     this.emit(':askWithCard', "Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
@@ -88,6 +88,98 @@ var handlers = {
             setRelationAdding.call(this);
         }
     },
+    "QueryRelationIntent": function () {
+        if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht");
+                    else {
+                        var answer;
+                        if (!body.length) answer = "Ich habe " + this.event.request.intent.slots.relation.value + " von " + this.event.request.intent.slots.name.value + " nicht gefunden.";
+                        else answer = arrayToSpeech(body, element => element.name);
+                        this.emit(':tellWithCard', answer, "Frage Beziehung", this.event.request.intent.slots.relation.value + " von " + this.event.request.intent.slots.name.value + " = " + answer);
+                    }
+                });
+        }
+    },
+    "QueryMemberRelations": function () {
+        if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+                .then(member => {
+                    if (member.error) this.emit(':tell', "Ich kenne die Person " + member.error + " nicht");
+                    else {
+                        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
+                            if (rels.length === 0) this.emit(':tell', "Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage " + member.name + " ist männlich oder " + member.name + " ist weiblich.");
+                            else {
+                                var relmap = groupBy(rels, r => r.relname);
+                                var answer = member.name + " ist ";
+                                answer += arrayToSpeech(Object.keys(relmap), r => arrayToSpeech(relmap[r], m => m.name + "s") + " " + r);
+                                this.emit(':tellWithCard', answer, "Anfrage Beziehungen", answer);
+                            }
+                        });
+                    }
+                });
+        }
+    },
+    "SetDateOfBirthIntent": function () {
+        if (this.attributes.dialogstatus === 'ADDINITIAL') {
+            handleUnexpectedIntent.call(this);
+        } else if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            if (!this.event.request.intent.slots.year || !this.event.request.intent.slots.year.value || this.event.request.intent.slots.year.value.length < 4) {
+                this.emit(':tell', "Tut mir leid, das Jahr " + (this.event.request.intent.slots.year ? this.event.request.intent.slots.year.value : "") + " ist ungültig");
+            } else if (!this.event.request.intent.slots.birthday || !this.event.request.intent.slots.birthday.value || this.event.request.intent.slots.birthday.value.length != 10) {
+                this.emit(':tell', "Tut mir leid, das Datum " + (this.event.request.intent.slots.birthday ? this.event.request.intent.slots.birthday.value : "") + " ist ungültig");
+            } else {
+                invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=birthday&value=' + this.event.request.intent.slots.year.value + this.event.request.intent.slots.birthday.value.substr(4))
+                    .then(body => {
+                        if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                        else this.emit(':tellWithCard', "Okay, " + body.name + " wurde am " + body.birthday + " geboren.", "Setze Geburtsdatum", body.name + " = " + body.birthday);
+                    });
+            }
+        }
+    },
+    "QueryDateOfBirthIntent": function () {
+        if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                    else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
+                    else this.emit(':tellWithCard', body.name + " wurde am " + body.birthday + " geboren", "Anfrage Geburtsdatum", body.birthday);
+                });
+        }
+    },
+    "QueryAgeIntent": function () {
+        if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                    else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
+                    else this.emit(':tellWithCard', body.name + " ist " + body.birthday_age + " Jahre alt", "Anfrage Alter", body.birthday_age);
+                });
+        }
+    },
+    "QueryBirthdayIntent": function () {
+        if (this.event.request.dialogState !== 'COMPLETED') {
+            this.emit(':delegate'); // go on
+        } else {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                    else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
+                    else this.emit(':tellWithCard', body.name + " wird am " + body.birthday_next + " " + (body.birthday_age+1) + " Jahre alt.", "Anfrage Geburtstag", body.birthday_next);
+                });
+        }
+    },
     /*
     "DeleteMemberIntent": function () {
         invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
@@ -110,46 +202,6 @@ var handlers = {
                 else this.emit(':ask', "Okay", "Was nun?");
             });
     },
-    "SetDateOfBirthIntent": function () {
-        if (!this.event.request.intent.slots.year || !this.event.request.intent.slots.year.value || this.event.request.intent.slots.year.value.length < 4) {
-            this.emit(':tell', "Tut mir leid, das Jahr " + (this.event.request.intent.slots.year ? this.event.request.intent.slots.year.value : "") + " ist ungültig");
-        } else if (!this.event.request.intent.slots.birthday || !this.event.request.intent.slots.birthday.value || this.event.request.intent.slots.birthday.value.length != 10) {
-            this.emit(':tell', "Tut mir leid, das Datum " + (this.event.request.intent.slots.birthday ? this.event.request.intent.slots.birthday.value : "") + " ist ungültig");
-        } else {
-            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=birthday&value=' + this.event.request.intent.slots.year.value + this.event.request.intent.slots.birthday.value.substr(4))
-                .then(function(body) {
-                    if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                    else this.emit(':askWithCard', "Okay, " + body.name + " wurde am " + body.birthday + " geboren.", "Was nun?", "Setze Geburtsdatum", body.name + " = " + body.birthday);
-                });
-        }
-    },
-    "SetBirthdayTestIntent": function () {
-        this.emit(':ask', "Ich habe verstanden: " + this.event.request.intent.slots.birthday.value);
-    },
-    "QueryDateOfBirthIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
-                else this.emit(':askWithCard', body.name + " wurde am " + body.birthday + " geboren", "Was nun?", "Anfrage Geburtsdatum", body.birthday);
-            });
-    },
-    "QueryAgeIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
-                else this.emit(':askWithCard', body.name + " ist " + body.birthday_age + " Jahre alt", "Was nun?", "Anfrage Alter", body.birthday_age);
-            });
-    },
-    "QueryBirthdayIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
-                else this.emit(':askWithCard', body.name + " wird am " + body.birthday_next + " " + (body.birthday_age+1) + " Jahre alt.", "Was nun?", "Anfrage Geburtstag", body.birthday_next);
-            });
-    },
     "SetRelationIntent": function () {
         setRelation.call(this);
     },
@@ -158,35 +210,6 @@ var handlers = {
     },
     "SetRelationExtInvIntent": function () {
         setRelation.call(this, true);
-    },
-    "QueryRelationIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht", "Was nun?");
-                else {
-                    var answer;
-                    if (!body.length) answer = "Ich habe " + this.event.request.intent.slots.relation.value + " von " + this.event.request.intent.slots.name.value + " nicht gefunden.";
-                    else answer = arrayToSpeech(body, element => element.name);
-                    this.emit(':askWithCard', answer, "Was nun?", "Frage Beziehung", this.event.request.intent.slots.relation.value + " von " + this.event.request.intent.slots.name.value + " = " + answer);
-                }
-            });
-    },
-    "QueryMemberRelations": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
-            .then(function(member) {
-                if (member.error) this.emit(':ask', "Ich kenne die Person " + member.error + " nicht", "Was nun?");
-                else {
-                    invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
-                        if (rels.length === 0) this.emit(':ask', "Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage " + member.name + " ist männlich oder " + member.name + " ist weiblich.", "Was nun?");
-                        else {
-                            var relmap = groupBy(rels, r => r.relname);
-                            var answer = member.name + " ist ";
-                            answer += arrayToSpeech(Object.keys(relmap), r => arrayToSpeech(relmap[r], m => m.name + "s") + " " + r);
-                            this.emit(':askWithCard', answer, "Was nun?", "Anfrage Beziehungen", answer);
-                        }
-                    });
-                }
-            });
     }, */
     "AMAZON.CancelIntent": function () {
         cancel.call(this);

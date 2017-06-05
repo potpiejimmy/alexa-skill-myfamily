@@ -28,7 +28,10 @@
       "samples": [
         "füge {name_a} hinzu",
         "person hinzufügen",
-        "füge {name_b} {relation} hinzu"
+        "füge {name_b} {relation} hinzu",
+        "füge {name_b} {relation} {name_a} hinzu",
+        "füge {name_b} und {name_c} {relation} hinzu",
+        "füge {name_b} und {name_c} {relation} {name_a} hinzu"
       ],
       "slots": [
         {
@@ -88,6 +91,128 @@
         "wer gehört zu meiner familie"
       ],
       "slots": []
+    },
+    {
+      "name": "QueryAgeIntent",
+      "samples": [
+        "wie alt ist {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QueryBirthdayIntent",
+      "samples": [
+        "wann hat {name} geburtstag",
+        "wie alt wird {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QueryDateOfBirthIntent",
+      "samples": [
+        "wann wurde {name} geboren",
+        "was ist das geburtsdatum von {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QueryMemberRelations",
+      "samples": [
+        "wer ist {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QueryRelationIntent",
+      "samples": [
+        "wer ist {name} {relation}",
+        "wer sind die {relation} von {name}",
+        "wer sind {name} {relation}",
+        "wer ist der {relation} von {name}",
+        "wer ist die {relation} von {name}",
+        "wer ist das {relation} von {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        },
+        {
+          "name": "relation",
+          "type": "CUSTOM_FAMILYREL",
+          "samples": [
+            "{relation}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SetDateOfBirthIntent",
+      "samples": [
+        "{name} wurde am {birthday} {year} geboren",
+        "das geburtsdatum von {name} ist {birthday} {year}",
+        "{name} geburtstag ist der {birthday}",
+        "{name} hat am {birthday} geburtstag"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        },
+        {
+          "name": "birthday",
+          "type": "AMAZON.DATE",
+          "samples": [
+            "{birthday}",
+            "am {birthday}"
+          ]
+        },
+        {
+          "name": "year",
+          "type": "AMAZON.FOUR_DIGIT_NUMBER",
+          "samples": [
+            "{year}"
+          ]
+        }
+      ]
     }
   ],
   "types": [
@@ -407,6 +532,105 @@
           "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante?"
         }
       ]
+    },
+    {
+      "id": "Elicit.Intent-QueryAgeIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-QueryBirthdayIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-QueryDateOfBirthIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-QueryMemberRelations.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welches Familienmitglied meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-QueryRelationIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welches Familienmitglied meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-QueryRelationIntent.IntentSlot-relation",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Art der Beziehung meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-birthday",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "An welchem Tag hat {name} Geburtstag?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-year",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "In welchem Jahr wurde {name} geboren?"
+        }
+      ]
     }
   ],
   "dialog": {
@@ -489,6 +713,129 @@
         "confirmationRequired": false,
         "prompts": {},
         "slots": []
+      },
+      {
+        "name": "QueryAgeIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryAgeIntent.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "QueryBirthdayIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryBirthdayIntent.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "QueryDateOfBirthIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryDateOfBirthIntent.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "QueryMemberRelations",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryMemberRelations.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "QueryRelationIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryRelationIntent.IntentSlot-name"
+            }
+          },
+          {
+            "name": "relation",
+            "type": "CUSTOM_FAMILYREL",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-QueryRelationIntent.IntentSlot-relation"
+            }
+          }
+        ]
+      },
+      {
+        "name": "SetDateOfBirthIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-name"
+            }
+          },
+          {
+            "name": "birthday",
+            "type": "AMAZON.DATE",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-birthday"
+            }
+          },
+          {
+            "name": "year",
+            "type": "AMAZON.FOUR_DIGIT_NUMBER",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-year"
+            }
+          }
+        ]
       }
     ]
   }
