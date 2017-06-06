@@ -50,3 +50,4 @@ INSERT INTO `member_rel_dict_de` (`relname`,`relation`,`gender`,`prio`) VALUES (
 INSERT INTO `member_rel_dict_de` (`relname`,`relation`,`gender`,`prio`) VALUES ('enkel','grandchild','m',1);
 INSERT INTO `member_rel_dict_de` (`relname`,`relation`,`gender`,`prio`) VALUES ('enkelin','grandchild','f',1);
 INSERT INTO `member_rel_dict_de` (`relname`,`relation`,`gender`,`prio`) VALUES ('enkelinnen','grandchild','f',NULL);
+INSERT INTO `member_rel_dict_de` (`relname`,`relation`,`gender`,`prio`) VALUES ('enkelkinder','grandchild',NULL,NULL);

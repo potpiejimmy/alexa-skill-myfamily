@@ -17,39 +17,24 @@ var handlers = {
                 this.attributes.dialogstatus = 'ADDINITIAL';
                 this.emit(':ask', "Willkommen bei deiner Familie. Noch sind keine Familienmitglieder vorhanden. " + currentDialogInstructions.call(this), currentDialogInstructions.call(this));
             } else {
+                this.attributes.dialogstatus = 'DEFAULT';
                 var members = arrayToSpeech(body, m => m.name);
                 this.emit(':askWithCard', "Willkommen. Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
             }
         });
     },
     "AddInitialMemberIntent": function () {
-        if (this.attributes.dialogstatus !== 'ADDINITIAL') {
-            handleUnexpectedIntent.call(this);
-        } else if (this.event.request.dialogState !== 'COMPLETED') {
-            var intent = this.event.request.intent;
-            if (intent.slots.gender.value) {
-                // check value of gender: only allow männlich or weiblich
-                if (intent.slots.gender.value !== 'weiblich') intent.slots.gender.value = 'männlich';
-                this.emit(':delegate', intent); // update intent
-            }
-            else {
-                this.emit(':delegate');
-            }
-        } else {
-            if (this.event.request.intent.confirmationStatus === 'NONE') {
-                this.emit(':confirmIntent', "Okay, ich werde deine Familie mit der Person {name} einrichten. "+this.event.request.intent.slots.name.value+" ist eine "+this.event.request.intent.slots.gender.value+"e Person. Ist das richtig?", 'Sag ja oder nein');
-            } else {
-                if (assertIntentConfirmed.call(this)) {
-                    setInitialMember.call(this);
-                }
+        if (assertDialogStatusAndState.call(this, 'ADDINITIAL')) {
+            // check value of gender: only allow männlich or weiblich
+            if (this.event.request.intent.slots.gender.value !== 'weiblich') this.event.request.intent.slots.gender.value = 'männlich';
+            if (handleIntentConfirmation.call(this, "Okay, ich werde deine Familie mit der Person "+this.event.request.intent.slots.name.value+" einrichten. "+this.event.request.intent.slots.name.value+" ist eine "+this.event.request.intent.slots.gender.value+"e Person. Ist das richtig?")) {
+                setInitialMember.call(this);
             }
         }
     },
     "DeleteMembersIntent": function () {
-        if (this.event.request.intent.confirmationStatus === 'NONE') {
-            this.emit(':confirmIntent', 'Soll ich wirklich alle Personen löschen?', 'Sag ja oder nein');
-        } else {
-            if (assertIntentConfirmed.call(this)) {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            if (handleIntentConfirmation.call(this, 'Soll ich wirklich alle Personen löschen?')) {
                 invokeBackend.call(this, BACKEND_URL+'/member', {method: 'DELETE'})
                     .then(body => {
                         this.attributes.dialogstatus = 'ADDINITIAL';
@@ -59,23 +44,25 @@ var handlers = {
         }
     },
     "ListMembersIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member')
-            .then(body => {
-                if (body.length === 0)
-                    this.emit(':tell', "Es sind keine Familienmitglieder vorhanden");
-                else {
-                    var members = arrayToSpeech(body, m => m.name);
-                    this.emit(':askWithCard', "Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
-                }
-            });
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            invokeBackend.call(this, BACKEND_URL+'/member')
+                .then(body => {
+                    if (body.length === 0)
+                        this.emit(':tell', "Es sind keine Familienmitglieder vorhanden");
+                    else {
+                        var members = arrayToSpeech(body, m => m.name);
+                        this.emit(':askWithCard', "Deine Familienmitglieder sind: " + members, "Was nun?", "Weltraum", members);
+                    }
+                });
+        }
     },
     "AddMemberIntent": function () {
-        if (this.attributes.dialogstatus === 'ADDINITIAL') {
+        if (this.attributes.dialogstatus && this.attributes.dialogstatus !== 'DEFAULT') {
             handleUnexpectedIntent.call(this);
         } else if (this.event.request.dialogState !== 'COMPLETED') {
             var intent = this.event.request.intent;
             if (intent.slots.name_a.value) { // name_a set
-                // verify existance and abort if the name already exists
+                // verify existence and abort if the name already exists
                 invokeBackend.call(this, BACKEND_URL+'/member/' + intent.slots.name_a.value + "?noFallback=true")
                     .then(body => {
                         if (body.error) this.emit(':delegate'); // go on
@@ -88,10 +75,13 @@ var handlers = {
             setRelationAdding.call(this);
         }
     },
+    "SetRelationIntent": function () {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            setRelation.call(this);
+        }
+    },
     "QueryRelationIntent": function () {
-        if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + "/rel?reverse=true&find=" + this.event.request.intent.slots.relation.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person oder die Bezeichnung " + body.error + " nicht");
@@ -105,9 +95,7 @@ var handlers = {
         }
     },
     "QueryMemberRelations": function () {
-        if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(member => {
                     if (member.error) this.emit(':tell', "Ich kenne die Person " + member.error + " nicht");
@@ -126,11 +114,7 @@ var handlers = {
         }
     },
     "SetDateOfBirthIntent": function () {
-        if (this.attributes.dialogstatus === 'ADDINITIAL') {
-            handleUnexpectedIntent.call(this);
-        } else if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             if (!this.event.request.intent.slots.year || !this.event.request.intent.slots.year.value || this.event.request.intent.slots.year.value.length < 4) {
                 this.emit(':tell', "Tut mir leid, das Jahr " + (this.event.request.intent.slots.year ? this.event.request.intent.slots.year.value : "") + " ist ungültig");
             } else if (!this.event.request.intent.slots.birthday || !this.event.request.intent.slots.birthday.value || this.event.request.intent.slots.birthday.value.length != 10) {
@@ -145,9 +129,7 @@ var handlers = {
         }
     },
     "QueryDateOfBirthIntent": function () {
-        if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
@@ -157,9 +139,7 @@ var handlers = {
         }
     },
     "QueryAgeIntent": function () {
-        if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
@@ -169,9 +149,7 @@ var handlers = {
         }
     },
     "QueryBirthdayIntent": function () {
-        if (this.event.request.dialogState !== 'COMPLETED') {
-            this.emit(':delegate'); // go on
-        } else {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
@@ -180,37 +158,35 @@ var handlers = {
                 });
         }
     },
-    /*
     "DeleteMemberIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else this.emit(':ask', "Okay, ich habe " + body.deleted + " gelöscht", "Was nun?");
-            });
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            if (handleIntentConfirmation.call(this, "Soll ich die Person " + this.event.request.intent.slots.name.value + " wirklich löschen?")) {
+                invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value, {method: 'DELETE'})
+                    .then(body => {
+                        if (body.error) this.emit(':tell', "Tut mir leid, ich kenne die Person " + body.error + " nicht");
+                        else this.emit(':tell', "Okay, ich habe " + body.deleted + " gelöscht");
+                    });
+            }
+        }
     },
     "SetMaleIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=m')
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else this.emit(':ask', "Okay", "Was nun?");
-            });
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=m')
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                    else this.emit(':tell', "Okay, " + body.name + " ist eine männlich Person.");
+                });
+        }
     },
     "SetFemaleIntent": function () {
-        invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=f')
-            .then(function(body) {
-                if (body.error) this.emit(':ask', "Ich kenne die Person " + body.error + " nicht", "Was nun?");
-                else this.emit(':ask', "Okay", "Was nun?");
-            });
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '?set=gender&value=f')
+                .then(body => {
+                    if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
+                    else this.emit(':tell', "Okay, " + body.name + " ist eine weiblich Person.");
+                });
+        }
     },
-    "SetRelationIntent": function () {
-        setRelation.call(this);
-    },
-    "SetRelationExtIntent": function () {
-        setRelation.call(this);
-    },
-    "SetRelationExtInvIntent": function () {
-        setRelation.call(this, true);
-    }, */
     "AMAZON.CancelIntent": function () {
         cancel.call(this);
     },
@@ -235,15 +211,32 @@ function cancel() {
 }
 
 function currentDialogInstructions() {
-    if (this.attributes.dialogstatus == 'ADDINITIAL') {
+    if (this.attributes.dialogstatus === 'ADDINITIAL') {
         return "Sage: Familie einrichten, um zu beginnen.";
-    } else {
+    } else if (this.attributes.dialogstatus === 'DEFAULT') {
         return "Sage zum Beispiel: wer ist Max, oder: wie alt ist David.";
+    } else {
+        return "Ich habe dich leider nicht verstanden. Sage Stop, um den Skill zu beenden."
     }
 }
 
-function assertIntentConfirmed() {
-    if (this.event.request.intent.confirmationStatus !== 'CONFIRMED') {
+function assertDialogStatusAndState(dialogStatus) {
+    if (!this.attributes.dialogstatus) this.attributes.dialogstatus = 'DEFAULT';
+    if (this.attributes.dialogstatus !== dialogStatus) {
+        handleUnexpectedIntent.call(this);
+        return false;
+    } else if (this.event.request.dialogState !== 'COMPLETED') {
+        this.emit(':delegate'); // go on with dialog
+        return false;
+    }
+    return true;
+}
+
+function handleIntentConfirmation(confirmationPrompt) {
+    if (this.event.request.intent.confirmationStatus === 'NONE') {
+        this.emit(':confirmIntent', confirmationPrompt, 'Sag ja oder nein');
+        return false;
+    } else if (this.event.request.intent.confirmationStatus !== 'CONFIRMED') {
         cancel.call(this);
         return false;
     }
@@ -253,7 +246,7 @@ function assertIntentConfirmed() {
 function setInitialMember() {
     var name = this.event.request.intent.slots.name.value;
     var gender = this.event.request.intent.slots.gender.value;
-    this.attributes.dialogstatus = null;
+    this.attributes.dialogstatus = 'DEFAULT';
     invokeBackend.call(this, BACKEND_URL+'/member', {method: 'POST', body: JSON.stringify({name: name, gender: gender.substr(0,1)}), headers: {"Content-Type": "application/json"}}).then(body => {
         if (body.error) this.emit(':ask', "Die Person " + body.error + " existiert bereits.", "Was nun?");
         else this.emit(':ask', "Okay, ich habe die " + gender + "e Person " + name + " hinzugefügt. Füge nun weitere Personen hinzu, indem du zum Beispiel sagst: Füge David hinzu.", "Was nun?");

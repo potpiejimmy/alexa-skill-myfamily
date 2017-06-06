@@ -78,6 +78,21 @@
       "samples": []
     },
     {
+      "name": "DeleteMemberIntent",
+      "samples": [
+        "lösche {name}"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
       "name": "DeleteMembersIntent",
       "samples": [
         "lösche alle personen"
@@ -211,6 +226,80 @@
           "samples": [
             "{year}"
           ]
+        }
+      ]
+    },
+    {
+      "name": "SetFemaleIntent",
+      "samples": [
+        "{name} ist weiblich",
+        "{name} ist eine Frau",
+        "{name} ist ein Mädchen"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SetMaleIntent",
+      "samples": [
+        "{name} ist männlich",
+        "{name} ist ein Mann",
+        "{name} ist ein Junge"
+      ],
+      "slots": [
+        {
+          "name": "name",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name}"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SetRelationIntent",
+      "samples": [
+        "{name_a} ist {name_b} {relation}",
+        "{name_a} ist {relation} von {name_b}",
+        "{name_a} ist {name_b} und {name_c} {relation}",
+        "{name_a} ist {relation} von {name_b} und {name_c}"
+      ],
+      "slots": [
+        {
+          "name": "name_a",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name_a}"
+          ]
+        },
+        {
+          "name": "name_b",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": [
+            "{name_b} {relation}",
+            "{relation} von {name_b}",
+            "{name_b} und {name_c} {relation}",
+            "{relation} von {name_b} und {name_c}"
+          ]
+        },
+        {
+          "name": "relation",
+          "type": "CUSTOM_FAMILYREL",
+          "samples": [
+            "{relation}"
+          ]
+        },
+        {
+          "name": "name_c",
+          "type": "AMAZON.DE_FIRST_NAME",
+          "samples": []
         }
       ]
     }
@@ -534,6 +623,17 @@
       ]
     },
     {
+      "id": "Elicit.Intent-DeleteMemberIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person soll ich löschen?"
+        }
+      ]
+    },
+    {
       "id": "Elicit.Intent-QueryAgeIntent.IntentSlot-name",
       "promptVersion": "1.0",
       "definitionVersion": "1.0",
@@ -631,6 +731,61 @@
           "value": "In welchem Jahr wurde {name} geboren?"
         }
       ]
+    },
+    {
+      "id": "Elicit.Intent-SetFemaleIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetMaleIntent.IntentSlot-name",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetRelationIntent.IntentSlot-name_a",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Welche Person meinst du?"
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetRelationIntent.IntentSlot-name_b",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund oder der Bruder von Hans oder Annes und Bobs Tochter."
+        }
+      ]
+    },
+    {
+      "id": "Elicit.Intent-SetRelationIntent.IntentSlot-relation",
+      "promptVersion": "1.0",
+      "definitionVersion": "1.0",
+      "variations": [
+        {
+          "type": "PlainText",
+          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante?"
+        }
+      ]
     }
   ],
   "dialog": {
@@ -699,6 +854,22 @@
             "elicitationRequired": false,
             "confirmationRequired": false,
             "prompts": {}
+          }
+        ]
+      },
+      {
+        "name": "DeleteMemberIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-DeleteMemberIntent.IntentSlot-name"
+            }
           }
         ]
       },
@@ -834,6 +1005,79 @@
             "prompts": {
               "elicit": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-year"
             }
+          }
+        ]
+      },
+      {
+        "name": "SetFemaleIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetFemaleIntent.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "SetMaleIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetMaleIntent.IntentSlot-name"
+            }
+          }
+        ]
+      },
+      {
+        "name": "SetRelationIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": [
+          {
+            "name": "name_a",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetRelationIntent.IntentSlot-name_a"
+            }
+          },
+          {
+            "name": "name_b",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetRelationIntent.IntentSlot-name_b"
+            }
+          },
+          {
+            "name": "relation",
+            "type": "CUSTOM_FAMILYREL",
+            "elicitationRequired": true,
+            "confirmationRequired": false,
+            "prompts": {
+              "elicit": "Elicit.Intent-SetRelationIntent.IntentSlot-relation"
+            }
+          },
+          {
+            "name": "name_c",
+            "type": "AMAZON.DE_FIRST_NAME",
+            "elicitationRequired": false,
+            "confirmationRequired": false,
+            "prompts": {}
           }
         ]
       }
