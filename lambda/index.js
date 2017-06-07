@@ -101,7 +101,7 @@ var handlers = {
                     if (member.error) this.emit(':tell', "Ich kenne die Person " + member.error + " nicht");
                     else {
                         invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value + '/rel?resolveDict=true').then(rels => {
-                            if (rels.length === 0) this.emit(':tell', "Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage " + member.name + " ist männlich oder " + member.name + " ist weiblich.");
+                            if (rels.length === 0) this.emit(':tell', "Du hast noch keine eindeutigen Beziehungsinformationen zu " + member.name + " hinterlegt. Um mir das Geschlecht mitzuteilen, sage zum Beispiel: " + member.name + " ist Davids Sohn oder: " + member.name + " ist Davids Tochter.");
                             else {
                                 var relmap = groupBy(rels, r => r.relname);
                                 var answer = member.name + " ist ";

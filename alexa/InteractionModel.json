@@ -230,40 +230,6 @@
       ]
     },
     {
-      "name": "SetFemaleIntent",
-      "samples": [
-        "{name} ist weiblich",
-        "{name} ist eine Frau",
-        "{name} ist ein Mädchen"
-      ],
-      "slots": [
-        {
-          "name": "name",
-          "type": "AMAZON.DE_FIRST_NAME",
-          "samples": [
-            "{name}"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "SetMaleIntent",
-      "samples": [
-        "{name} ist männlich",
-        "{name} ist ein Mann",
-        "{name} ist ein Junge"
-      ],
-      "slots": [
-        {
-          "name": "name",
-          "type": "AMAZON.DE_FIRST_NAME",
-          "samples": [
-            "{name}"
-          ]
-        }
-      ]
-    },
-    {
       "name": "SetRelationIntent",
       "samples": [
         "{name_a} ist {name_b} {relation}",
@@ -607,7 +573,7 @@
       "variations": [
         {
           "type": "PlainText",
-          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund oder der Bruder von Hans oder Annes und Bobs Tochter."
+          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund, oder der Bruder von Hans, oder Annes und Bobs Tochter."
         }
       ]
     },
@@ -618,7 +584,7 @@
       "variations": [
         {
           "type": "PlainText",
-          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante?"
+          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante"
         }
       ]
     },
@@ -733,28 +699,6 @@
       ]
     },
     {
-      "id": "Elicit.Intent-SetFemaleIntent.IntentSlot-name",
-      "promptVersion": "1.0",
-      "definitionVersion": "1.0",
-      "variations": [
-        {
-          "type": "PlainText",
-          "value": "Welche Person meinst du?"
-        }
-      ]
-    },
-    {
-      "id": "Elicit.Intent-SetMaleIntent.IntentSlot-name",
-      "promptVersion": "1.0",
-      "definitionVersion": "1.0",
-      "variations": [
-        {
-          "type": "PlainText",
-          "value": "Welche Person meinst du?"
-        }
-      ]
-    },
-    {
       "id": "Elicit.Intent-SetRelationIntent.IntentSlot-name_a",
       "promptVersion": "1.0",
       "definitionVersion": "1.0",
@@ -772,7 +716,7 @@
       "variations": [
         {
           "type": "PlainText",
-          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund oder der Bruder von Hans oder Annes und Bobs Tochter."
+          "value": "Wer ist {name_a}. Sage zum Beispiel, Daniels Freund, oder der Bruder von Hans, oder Annes und Bobs Tochter."
         }
       ]
     },
@@ -783,7 +727,7 @@
       "variations": [
         {
           "type": "PlainText",
-          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante?"
+          "value": "In welcher Beziehung steht {name_a} zu {name_b}, sage zum Beispiel Sohn oder Freund oder Tante"
         }
       ]
     }
@@ -1004,38 +948,6 @@
             "confirmationRequired": false,
             "prompts": {
               "elicit": "Elicit.Intent-SetDateOfBirthIntent.IntentSlot-year"
-            }
-          }
-        ]
-      },
-      {
-        "name": "SetFemaleIntent",
-        "confirmationRequired": false,
-        "prompts": {},
-        "slots": [
-          {
-            "name": "name",
-            "type": "AMAZON.DE_FIRST_NAME",
-            "elicitationRequired": true,
-            "confirmationRequired": false,
-            "prompts": {
-              "elicit": "Elicit.Intent-SetFemaleIntent.IntentSlot-name"
-            }
-          }
-        ]
-      },
-      {
-        "name": "SetMaleIntent",
-        "confirmationRequired": false,
-        "prompts": {},
-        "slots": [
-          {
-            "name": "name",
-            "type": "AMAZON.DE_FIRST_NAME",
-            "elicitationRequired": true,
-            "confirmationRequired": false,
-            "prompts": {
-              "elicit": "Elicit.Intent-SetMaleIntent.IntentSlot-name"
             }
           }
         ]
