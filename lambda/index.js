@@ -143,7 +143,7 @@ var handlers = {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
-                    else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
+                    else if (!body.birthday_age) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
                     else this.emit(':tellWithCard', body.name + " ist " + body.birthday_age + " Jahre alt", "Anfrage Alter", body.birthday_age);
                 });
         }
@@ -153,8 +153,20 @@ var handlers = {
             invokeBackend.call(this, BACKEND_URL+'/member/' + this.event.request.intent.slots.name.value)
                 .then(body => {
                     if (body.error) this.emit(':tell', "Ich kenne die Person " + body.error + " nicht");
-                    else if (!body.birthday) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
+                    else if (!body.birthday_next) this.emit(':tell', "Ich weiß leider nicht, was das Geburtsdatum von " + body.name + " ist.");
                     else this.emit(':tellWithCard', body.name + " wird am " + body.birthday_next + " " + (body.birthday_age+1) + " Jahre alt.", "Anfrage Geburtstag", body.birthday_next);
+                });
+        }
+    },
+    "QueryBirthdaysIntent": function () {
+        if (assertDialogStatusAndState.call(this, 'DEFAULT')) {
+            invokeBackend.call(this, BACKEND_URL+'/member?nextBirthdays=true')
+                .then(body => {
+                    var nextBirthdays = [];
+                    body.forEach(member => {if (member.birthday_next) nextBirthdays.push(member.name + " wird am <say-as interpret-as=\"date\">????" + member.birthday_next.substr(5,2) + member.birthday_next.substr(8) + "</say-as> " + (member.birthday_age+1))});
+                    nextBirthdays = nextBirthdays.slice(0,3); // next three available birthdays
+                    var resultSpeech = "Die nächsten Geburtstage: " + arrayToSpeech(nextBirthdays, b => b + ",");
+                    this.emit(':tellWithCard', resultSpeech, resultSpeech);
                 });
         }
     },

@@ -15,7 +15,17 @@ app.get('/db', function (req, res) {
 })
 
 app.get('/member', function (req, res) {
-  db.querySingle("select * from member where userid=?",[req.query.userid]).then(data => res.send(data)).catch(err => res.send(err));
+  db.querySingle("select * from member where userid=?",[req.query.userid]).then(data => {
+    if (req.query.nextBirthdays) {
+      data.forEach(member => calcMemberBirthday(member));
+      data.sort((a,b) => {
+        if (!a.birthday_next) return 1;
+        if (!b.birthday_next) return -1;
+        return new Date(a.birthday_next).getTime() - new Date(b.birthday_next).getTime();
+      });
+      res.send(data);
+    } else res.send(data)
+  }).catch(err => res.send(err));
 });
 
 app.post('/member', function (req, res) {

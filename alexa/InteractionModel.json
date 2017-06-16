@@ -139,6 +139,14 @@
       ]
     },
     {
+      "name": "QueryBirthdaysIntent",
+      "samples": [
+        "Wer hat als nächstes Geburtstag",
+        "Was sind die nächsten Geburtstage"
+      ],
+      "slots": []
+    },
+    {
       "name": "QueryDateOfBirthIntent",
       "samples": [
         "wann wurde {name} geboren",
@@ -865,6 +873,12 @@
             }
           }
         ]
+      },
+      {
+        "name": "QueryBirthdaysIntent",
+        "confirmationRequired": false,
+        "prompts": {},
+        "slots": []
       },
       {
         "name": "QueryDateOfBirthIntent",
