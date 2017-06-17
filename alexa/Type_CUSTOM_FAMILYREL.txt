@@ -47,3 +47,6 @@ enkel
 enkelin
 enkelinnen
 enkelkinder
+arbeitskollege
+arbeitskollegin
+arbeitskollegen

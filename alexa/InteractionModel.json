@@ -526,6 +526,21 @@
           "name": {
             "value": "enkelkinder"
           }
+        },
+        {
+          "name": {
+            "value": "arbeitskollege"
+          }
+        },
+        {
+          "name": {
+            "value": "arbeitskollegin"
+          }
+        },
+        {
+          "name": {
+            "value": "arbeitskollegen"
+          }
         }
       ]
     },
